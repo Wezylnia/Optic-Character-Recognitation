@@ -1,0 +1,108 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.pyc
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# PyTorch / Model weights
+*.pth
+*.pt
+*.ckpt
+checkpoints/
+weights/
+*.h5
+*.pkl
+
+# Data & Datasets
+DataSets/
+data/samples/
+data/test/
+data/train/
+data/*.json
+!data/.gitkeep
+*.tar
+*.tar.gz
+*.zip
+*.rar
+
+# Logs
+*.log
+logs/
+tensorboard/
+runs/
+
+# Temporary files
+*.tmp
+temp/
+tmp/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Large files
+*.bin
+*.safetensors
+
+# Keep directory structure
+!data/fonts/.gitkeep
+!data/samples/.gitkeep
+!ocr_engine/detection/weights/.gitkeep
+!ocr_engine/recognition/weights/.gitkeep
+
+# Environment variables
+.env
+.env.local
+
+# Test outputs
+test_output/
+output/
+results/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json

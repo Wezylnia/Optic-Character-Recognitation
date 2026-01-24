@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Engine</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>OCR Engine</h1>
+            <p>Gorsellerden metin cikarma</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="upload-area" id="dropZone">
+                    <div class="upload-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <p class="upload-text">Gorsel yuklemek icin tiklayin veya surukleyin</p>
+                    <p class="upload-hint">PNG, JPG, JPEG, BMP, TIFF, WEBP</p>
+                    <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tiff,.webp" hidden>
+                </div>
+
+                <!-- Options -->
+                <div class="options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="detectTables">
+                        <span>Tablo Algilama</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="spellCheck" checked>
+                        <span>Yazim Kontrolu</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Preview Section -->
+            <section class="preview-section" id="previewSection" style="display: none;">
+                <div class="preview-header">
+                    <h2>Gorsel</h2>
+                    <button class="btn btn-clear" id="clearBtn">Temizle</button>
+                </div>
+                <div class="preview-container">
+                    <img id="previewImage" src="" alt="Preview">
+                    <canvas id="overlayCanvas"></canvas>
+                </div>
+            </section>
+
+            <!-- Result Section -->
+            <section class="result-section" id="resultSection" style="display: none;">
+                <div class="result-header">
+                    <h2>Sonuc</h2>
+                    <div class="result-actions">
+                        <button class="btn btn-copy" id="copyBtn">Kopyala</button>
+                        <button class="btn btn-download" id="downloadBtn">Indir</button>
+                    </div>
+                </div>
+                
+                <div class="result-tabs">
+                    <button class="tab-btn active" data-tab="text">Metin</button>
+                    <button class="tab-btn" data-tab="json">JSON</button>
+                    <button class="tab-btn" data-tab="table" id="tableTab" style="display: none;">Tablo</button>
+                </div>
+
+                <div class="result-content">
+                    <div class="tab-content active" id="textContent">
+                        <textarea id="resultText" readonly></textarea>
+                    </div>
+                    <div class="tab-content" id="jsonContent">
+                        <pre id="resultJson"></pre>
+                    </div>
+                    <div class="tab-content" id="tableContent">
+                        <div id="resultTable"></div>
+                    </div>
+                </div>
+
+                <div class="result-meta" id="resultMeta"></div>
+            </section>
+
+            <!-- Loading -->
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Isleniyor...</p>
+            </div>
+
+            <!-- Error -->
+            <div class="error" id="error" style="display: none;">
+                <p id="errorText"></p>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>OCR Engine v1.0.0 | Python + PyTorch</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
