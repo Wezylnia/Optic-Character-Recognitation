@@ -54,7 +54,7 @@ def load_model():
     checkpoint_path = Path("checkpoints/1M_turbo/checkpoint_epoch_3.pth")
     if checkpoint_path.exists():
         print(f"Checkpoint yukleniyor: {checkpoint_path}")
-        checkpoint = torch.load(checkpoint_path, map_location=device)
+        checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
         model.load_state_dict(checkpoint['model_state_dict'])
         print(f"Epoch {checkpoint['epoch']} yuklendi")
     else:

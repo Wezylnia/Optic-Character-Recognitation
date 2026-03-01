@@ -7,7 +7,7 @@ import yaml
 from ocr_engine.recognition.vocab import Vocabulary
 from ocr_engine.recognition.model import CRNN
 from ocr_engine.recognition.decoder import CTCDecoder
-from training.dataset import RecognitionDataset, collate_recognition
+from training.recognition_dataset import RecognitionDataset, collate_recognition
 from torch.utils.data import DataLoader
 
 print("="*60)

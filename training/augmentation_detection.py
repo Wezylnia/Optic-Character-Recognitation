@@ -1,5 +1,5 @@
 """
-Veri artirma (data augmentation) islemleri
+Tespit ve temel augmentation sinifları: Augmentor, DetectionAugmentor, create_augmentation_pipeline
 """
 
 import cv2
@@ -271,85 +271,6 @@ class Augmentor:
             return cv2.dilate(image, kernel, iterations=1)
 
 
-class RecognitionAugmentor:
-    """Metin tanima icin ozellestirilmis augmentation"""
-    
-    def __init__(
-        self,
-        stretch_range: Tuple[float, float] = (0.8, 1.2),
-        shear_range: Tuple[float, float] = (-0.1, 0.1),
-        noise_prob: float = 0.3,
-        blur_prob: float = 0.3,
-        invert_prob: float = 0.1
-    ):
-        self.stretch_range = stretch_range
-        self.shear_range = shear_range
-        self.noise_prob = noise_prob
-        self.blur_prob = blur_prob
-        self.invert_prob = invert_prob
-    
-    def __call__(self, image: np.ndarray) -> np.ndarray:
-        """Augmentation uygula - Windows-safe (sadece numpy islemleri)"""
-        try:
-            # Goruntunun contiguous oldugundan emin ol
-            if not image.flags['C_CONTIGUOUS']:
-                image = np.ascontiguousarray(image)
-            
-            # Parlaklik ayari (numpy ile)
-            if random.random() < 0.3:
-                factor = random.uniform(0.7, 1.3)
-                image = np.clip(image.astype(np.float32) * factor, 0, 255).astype(np.uint8)
-            
-            # Kontrast ayari (numpy ile)
-            if random.random() < 0.3:
-                factor = random.uniform(0.8, 1.2)
-                mean = np.mean(image)
-                image = np.clip((image.astype(np.float32) - mean) * factor + mean, 0, 255).astype(np.uint8)
-            
-            # Gurultu (numpy ile - guvenli)
-            if random.random() < self.noise_prob:
-                std = random.uniform(5, 15)
-                noise = np.random.normal(0, std, image.shape).astype(np.float32)
-                image = np.clip(image.astype(np.float32) + noise, 0, 255).astype(np.uint8)
-            
-            # Renk ters cevirme (numpy ile - guvenli)
-            if random.random() < self.invert_prob:
-                image = 255 - image
-            
-            # Salt & pepper noise
-            if random.random() < 0.1:
-                noise_mask = np.random.random(image.shape)
-                image = np.where(noise_mask < 0.02, 0, image)  # Salt
-                image = np.where(noise_mask > 0.98, 255, image)  # Pepper
-                image = image.astype(np.uint8)
-                
-        except Exception as e:
-            # Herhangi bir hata durumunda orijinal gorseli dondur
-            pass
-        
-        return image
-    
-    def horizontal_stretch(self, image: np.ndarray) -> np.ndarray:
-        """Yatay germe"""
-        factor = random.uniform(*self.stretch_range)
-        h, w = image.shape[:2]
-        new_w = int(w * factor)
-        return cv2.resize(image, (new_w, h))
-    
-    def shear(self, image: np.ndarray) -> np.ndarray:
-        """Shear donusumu"""
-        shear_factor = random.uniform(*self.shear_range)
-        h, w = image.shape[:2]
-        
-        matrix = np.array([
-            [1, shear_factor, 0],
-            [0, 1, 0]
-        ], dtype=np.float32)
-        
-        new_w = w + int(abs(shear_factor) * h)
-        return cv2.warpAffine(image, matrix, (new_w, h))
-
-
 class DetectionAugmentor:
     """
     Detection egitimi icin ozellestirilmis augmentation
@@ -539,4 +460,5 @@ def create_augmentation_pipeline(
     if for_detection:
         return Augmentor(**params)
     else:
+        from .augmentation_recognition import RecognitionAugmentor
         return RecognitionAugmentor()

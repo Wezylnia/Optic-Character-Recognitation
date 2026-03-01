@@ -50,84 +50,7 @@ class CTCDecoder:
             decoded.append(text)
         
         return decoded
-    
-    def decode_beam(
-        self,
-        log_probs: torch.Tensor,
-        beam_width: int = 5,
-        lengths: Optional[torch.Tensor] = None
-    ) -> List[Tuple[str, float]]:
-        """
-        Beam search decoding - daha iyi sonuclar icin
-        
-        Args:
-            log_probs: [seq_len, batch, num_classes]
-            beam_width: Beam genisligi
-            lengths: [batch] - her ornek icin sequence uzunlugu
-            
-        Returns:
-            (metin, skor) tuple listesi
-        """
-        batch_size = log_probs.shape[1]
-        
-        if lengths is None:
-            lengths = [log_probs.shape[0]] * batch_size
-        else:
-            lengths = lengths.cpu().tolist()
-        
-        results = []
-        
-        for b in range(batch_size):
-            seq_len = lengths[b]
-            probs = log_probs[:seq_len, b, :].cpu().numpy()  # [seq_len, num_classes]
-            
-            # Beam search
-            beams = [([], 0.0)]  # (prefix, log_prob)
-            
-            for t in range(seq_len):
-                new_beams = []
-                
-                for prefix, score in beams:
-                    for c in range(probs.shape[1]):
-                        new_score = score + probs[t, c]
-                        
-                        if c == self.blank_idx:
-                            # Blank - prefix'i koru
-                            new_beams.append((prefix.copy(), new_score))
-                        else:
-                            # Karakter - prefix'e ekle
-                            new_prefix = prefix.copy()
-                            
-                            # Tekrarli karakterleri birlestir (CTC)
-                            if len(new_prefix) == 0 or new_prefix[-1] != c:
-                                new_prefix.append(c)
-                            
-                            new_beams.append((new_prefix, new_score))
-                
-                # En iyi beam_width kadarini tut
-                new_beams.sort(key=lambda x: x[1], reverse=True)
-                
-                # Ayni prefix'e sahip olanları birlestir
-                merged = {}
-                for prefix, score in new_beams:
-                    key = tuple(prefix)
-                    if key not in merged or merged[key] < score:
-                        merged[key] = score
-                
-                beams = [(list(k), v) for k, v in merged.items()]
-                beams.sort(key=lambda x: x[1], reverse=True)
-                beams = beams[:beam_width]
-            
-            # En iyi sonucu al
-            if beams:
-                best_prefix, best_score = beams[0]
-                text = self.vocab.decode(best_prefix, remove_blank=False)
-                results.append((text, best_score))
-            else:
-                results.append(("", 0.0))
-        
-        return results
-    
+
     def _collapse_repeated(self, indices: List[int]) -> str:
         """
         Tekrarli karakterleri birlestir ve blank'lari kaldir
@@ -165,23 +88,23 @@ class CTCDecoder:
     ) -> List[str]:
         """
         Batch decoding
-        
+
         Args:
             log_probs: [seq_len, batch, num_classes]
-            method: Decoding yontemi (greedy veya beam)
-            beam_width: Beam search icin beam genisligi
+            method: Decoding yontemi ('greedy' desteklenir)
+            beam_width: Kullanilmiyor, geri uyumluluk icin tutuldu
             lengths: [batch] - her ornek icin sequence uzunlugu
-            
+
         Returns:
             Decode edilmis metin listesi
         """
         if method == "greedy":
             return self.decode_greedy(log_probs, lengths)
-        elif method == "beam":
-            results = self.decode_beam(log_probs, beam_width, lengths)
-            return [text for text, _ in results]
         else:
-            raise ValueError(f"Bilinmeyen decoding yontemi: {method}")
+            raise ValueError(
+                f"Bilinmeyen decoding yontemi: '{method}'. "
+                "Beam search icin CTCPrefixDecoder kullanin."
+            )
 
 
 class CTCPrefixDecoder:

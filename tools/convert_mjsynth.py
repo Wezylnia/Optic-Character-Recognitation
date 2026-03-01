@@ -204,7 +204,8 @@ def split_dataset(
     with open(input_file, 'r', encoding='utf-8') as f:
         samples = json.load(f)
     
-    # Shuffle
+    # Shuffle (reproducible split)
+    random.seed(42)
     random.shuffle(samples)
     
     # Split

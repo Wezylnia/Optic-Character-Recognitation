@@ -456,7 +456,7 @@ def build_dbnet(
     model = DBNet(backbone=backbone, pretrained=pretrained)
     
     if weights_path:
-        state_dict = torch.load(weights_path, map_location='cpu')
+        state_dict = torch.load(weights_path, map_location='cpu', weights_only=False)
         model.load_state_dict(state_dict)
     
     return model

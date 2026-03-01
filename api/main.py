@@ -3,6 +3,7 @@ FastAPI ana uygulama
 """
 
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 # Proje kokunu path'e ekle
@@ -17,6 +18,25 @@ import yaml
 
 from api.routes import router
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Uygulama yasam dongusu — startup ve shutdown"""
+    # --- Startup ---
+    print("OCR Engine API baslatiliyor...")
+    from api.routes import get_ocr_pipeline
+    try:
+        get_ocr_pipeline()
+        print("OCR pipeline hazir!")
+    except Exception as e:
+        print(f"[UYARI] Pipeline baslatilamadi, ilk istekte tekrar denenecek: {e}")
+    print("API hazir!")
+
+    yield  # Uygulama calisiyor
+
+    # --- Shutdown ---
+    print("OCR Engine API kapatiliyor...")
+
 # Config yukle
 config_path = Path(__file__).parent.parent / 'config.yaml'
 if config_path.exists():
@@ -30,6 +50,7 @@ api_config = config.get('api', {})
 # FastAPI uygulamasi
 app = FastAPI(
     title="OCR Engine API",
+    lifespan=lifespan,
     description="""
     Python tabanli OCR (Optik Karakter Tanima) motoru.
     
@@ -67,7 +88,7 @@ app.include_router(router, prefix="/api/v1", tags=["OCR"])
 web_dir = Path(__file__).parent.parent / 'web'
 if web_dir.exists():
     app.mount("/static", StaticFiles(directory=str(web_dir)), name="static")
-    
+
     @app.get("/")
     async def root():
         """Ana sayfa - Web UI"""
@@ -83,34 +104,18 @@ else:
         }
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Uygulama basladiginda"""
-    print("OCR Engine API baslatiliyor...")
-    
-    # Model onbellekeleme (opsiyonel, ilk istekte yuklenir)
-    # from .routes import get_ocr_pipeline
-    # get_ocr_pipeline()
-    
-    print("API hazir!")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Uygulama kapanirken"""
-    print("OCR Engine API kapatiliyor...")
-
-
 def run():
     """Uygulamayi calistir"""
     host = api_config.get('host', '0.0.0.0')
     port = api_config.get('port', 8000)
     
+    import os
+    dev_mode = os.getenv("ENV", "production").lower() == "development"
     uvicorn.run(
         "api.main:app",
         host=host,
         port=port,
-        reload=True,
+        reload=dev_mode,
         log_level="info"
     )
 

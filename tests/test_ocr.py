@@ -224,7 +224,7 @@ class TestAugmentation(unittest.TestCase):
     
     def test_augmentor(self):
         """Augmentor test"""
-        from training.augmentation import Augmentor
+        from training.augmentation_detection import Augmentor
         
         augmentor = Augmentor(
             rotation_range=(-10, 10),
@@ -247,7 +247,7 @@ class TestSyntheticGenerator(unittest.TestCase):
     def test_generate_text(self):
         """Sentetik metin uretimi"""
         from ocr_engine.recognition.vocab import Vocabulary
-        from training.dataset import SyntheticTextGenerator
+        from training.synthetic import SyntheticTextGenerator
         
         vocab = Vocabulary()
         generator = SyntheticTextGenerator(vocab=vocab, image_height=32)

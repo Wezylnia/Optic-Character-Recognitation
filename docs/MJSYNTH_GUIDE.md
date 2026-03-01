@@ -23,7 +23,7 @@ MJSynth/
 
 **Basit kullanim (ilk 10,000 ornek ile test):**
 ```bash
-python training/convert_mjsynth.py \
+python tools/convert_mjsynth.py \
     --data_root "path/to/MJSynth" \
     --annotation "path/to/MJSynth/annotation_train.txt" \
     --output "data/mjsynth_train.json" \
@@ -32,7 +32,7 @@ python training/convert_mjsynth.py \
 
 **Tam veri seti (butun ornekler):**
 ```bash
-python training/convert_mjsynth.py \
+python tools/convert_mjsynth.py \
     --data_root "path/to/MJSynth" \
     --annotation "path/to/MJSynth/annotation_train.txt" \
     --output "data/mjsynth_train.json" \
@@ -43,7 +43,7 @@ python training/convert_mjsynth.py \
 
 **Daha hizli (validasyon olmadan):**
 ```bash
-python training/convert_mjsynth.py \
+python tools/convert_mjsynth.py \
     --data_root "path/to/MJSynth" \
     --annotation "path/to/MJSynth/annotation_train.txt" \
     --output "data/mjsynth_train.json" \
@@ -56,19 +56,19 @@ Eger MJSynth'i `C:\Datasets\MJSynth` klasorune indirdiyseniz:
 
 ```bash
 # Train seti
-python training/convert_mjsynth.py \
+python tools/convert_mjsynth.py \
     --data_root "C:\Datasets\MJSynth" \
     --annotation "C:\Datasets\MJSynth\annotation_train.txt" \
     --output "data/mjsynth_train.json"
 
 # Validation seti
-python training/convert_mjsynth.py \
+python tools/convert_mjsynth.py \
     --data_root "C:\Datasets\MJSynth" \
     --annotation "C:\Datasets\MJSynth\annotation_val.txt" \
     --output "data/mjsynth_val.json"
 
 # Test seti
-python training/convert_mjsynth.py \
+python tools/convert_mjsynth.py \
     --data_root "C:\Datasets\MJSynth" \
     --annotation "C:\Datasets\MJSynth\annotation_test.txt" \
     --output "data/mjsynth_test.json"
@@ -80,7 +80,7 @@ JSON dosyalari hazir olduktan sonra egitimi baslatabilirsiniz:
 
 ### Hizli Test Egitimi (10 epoch, kucuk veri)
 ```bash
-python training/train_mjsynth.py \
+python training/train_recognition_mjsynth.py \
     --data_root "C:\Datasets\MJSynth" \
     --train_json "data/mjsynth_train.json" \
     --val_json "data/mjsynth_val.json" \
@@ -91,7 +91,7 @@ python training/train_mjsynth.py \
 
 ### Tam Egitim (50 epoch)
 ```bash
-python training/train_mjsynth.py \
+python training/train_recognition_mjsynth.py \
     --data_root "C:\Datasets\MJSynth" \
     --train_json "data/mjsynth_train.json" \
     --val_json "data/mjsynth_val.json" \
@@ -102,7 +102,7 @@ python training/train_mjsynth.py \
 
 ### Egitimi Devam Ettirme
 ```bash
-python training/train_mjsynth.py \
+python training/train_recognition_mjsynth.py \
     --data_root "C:\Datasets\MJSynth" \
     --train_json "data/mjsynth_train.json" \
     --val_json "data/mjsynth_val.json" \

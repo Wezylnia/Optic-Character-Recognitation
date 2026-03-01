@@ -294,7 +294,11 @@ class CRNN(nn.Module):
         # Reshape for RNN
         # [batch, 512, 1, width'] -> [batch, width', 512]
         batch, channels, height, width = conv_out.size()
-        assert height == 1, f"Height must be 1, got {height}"
+        assert height == 1, (
+            f"CRNN encoder ciktisi height=1 olmali, ancak {height} geldi. "
+            f"Giris gorselinin yuksekligi encoder'in beklentisiyle uyusmuyor. "
+            f"Input shape: {x.shape}"
+        )
         
         conv_out = conv_out.squeeze(2)  # [batch, channels, width]
         conv_out = conv_out.permute(0, 2, 1)  # [batch, width, channels]
@@ -335,17 +339,22 @@ class CRNN(nn.Module):
     def get_sequence_length(self, input_width: int) -> int:
         """
         Giris genisligine gore cikis sequence uzunlugunu hesapla
-        
+
         Args:
             input_width: Giris gorseli genisligi
-            
+
         Returns:
             Cikis sequence uzunlugu
         """
-        # VGG encoder icin yaklasik hesaplama
-        # Pool1: /2, Pool2: /2, sonrakiler W'yi degistirmez
-        # Conv5'te -1
-        return (input_width // 4) - 1
+        if isinstance(self.encoder, ResNetEncoder):
+            # block1: stride=(2,2) → W/2
+            # block2-4: stride=(2,1) → W unchanged
+            # conv_out: kernel_w=1 → W unchanged
+            return input_width // 2
+        else:
+            # VGG encoder:
+            # Pool1: W/2, Pool2: W/2, Pool3/4: W unchanged, Conv5: W-1
+            return (input_width // 4) - 1
 
 
 class CRNNLoss(nn.Module):
@@ -409,7 +418,7 @@ def build_crnn(
     )
     
     if weights_path:
-        state_dict = torch.load(weights_path, map_location='cpu')
+        state_dict = torch.load(weights_path, map_location='cpu', weights_only=False)
         model.load_state_dict(state_dict)
     
     return model

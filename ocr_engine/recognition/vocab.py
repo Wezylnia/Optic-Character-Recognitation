@@ -30,29 +30,36 @@ class Vocabulary:
     
     # CTC blank token
     BLANK_TOKEN = "<BLANK>"
-    
+
     # Bilinmeyen karakter token
     UNK_TOKEN = "<UNK>"
+
+    # Attention decoder icin baslangic/bitis tokenlari
+    SOS_TOKEN = "<SOS>"
+    EOS_TOKEN = "<EOS>"
     
     def __init__(
         self,
         chars: Optional[str] = None,
         include_blank: bool = True,
-        include_unk: bool = True
+        include_unk: bool = True,
+        include_sos_eos: bool = False
     ):
         """
         Args:
             chars: Karakter dizisi (None ise varsayilan)
-            include_blank: CTC blank token ekle
-            include_unk: Bilinmeyen token ekle
+            include_blank: CTC blank token ekle (idx 0)
+            include_unk: Bilinmeyen token ekle (idx 1)
+            include_sos_eos: Attention decoder icin SOS/EOS token ekle
         """
         if chars is None:
             chars = self.DEFAULT_CHARS
-        
+
         self.chars = chars
         self.include_blank = include_blank
         self.include_unk = include_unk
-        
+        self.include_sos_eos = include_sos_eos
+
         # Karakter -> index ve index -> karakter mapping'leri olustur
         self._build_vocab()
     
@@ -80,7 +87,22 @@ class Vocabulary:
             idx += 1
         else:
             self.unk_idx = -1
-        
+
+        # Attention icin SOS / EOS tokenlari
+        if self.include_sos_eos:
+            self.char_to_idx[self.SOS_TOKEN] = idx
+            self.idx_to_char[idx] = self.SOS_TOKEN
+            self.sos_idx = idx
+            idx += 1
+
+            self.char_to_idx[self.EOS_TOKEN] = idx
+            self.idx_to_char[idx] = self.EOS_TOKEN
+            self.eos_idx = idx
+            idx += 1
+        else:
+            self.sos_idx = -1
+            self.eos_idx = -1
+
         # Normal karakterler
         for char in self.chars:
             if char not in self.char_to_idx:
@@ -124,16 +146,18 @@ class Vocabulary:
         self,
         indices: List[int],
         remove_blank: bool = True,
-        remove_unk: bool = False
+        remove_unk: bool = False,
+        remove_sos_eos: bool = True
     ) -> str:
         """
-        Index listesini metne donustur
-        
+        Index listesini metne donustur.
+
         Args:
             indices: Index listesi
             remove_blank: Blank token'lari kaldir
             remove_unk: UNK token'lari kaldir
-            
+            remove_sos_eos: SOS/EOS tokenlarini kaldir
+
         Returns:
             Metin
         """
@@ -141,16 +165,18 @@ class Vocabulary:
         for idx in indices:
             if idx not in self.idx_to_char:
                 continue
-            
+
             char = self.idx_to_char[idx]
-            
+
             if remove_blank and char == self.BLANK_TOKEN:
                 continue
             if remove_unk and char == self.UNK_TOKEN:
                 continue
-            
+            if remove_sos_eos and char in (self.SOS_TOKEN, self.EOS_TOKEN):
+                continue
+
             chars.append(char)
-        
+
         return ''.join(chars)
     
     def __len__(self) -> int:
@@ -173,6 +199,7 @@ class Vocabulary:
             'chars': self.chars,
             'include_blank': self.include_blank,
             'include_unk': self.include_unk,
+            'include_sos_eos': self.include_sos_eos,
             'char_to_idx': self.char_to_idx,
             'idx_to_char': {str(k): v for k, v in self.idx_to_char.items()}
         }
@@ -189,7 +216,8 @@ class Vocabulary:
         vocab = cls(
             chars=data['chars'],
             include_blank=data['include_blank'],
-            include_unk=data['include_unk']
+            include_unk=data['include_unk'],
+            include_sos_eos=data.get('include_sos_eos', False)
         )
         
         return vocab
@@ -197,21 +225,18 @@ class Vocabulary:
     def get_all_chars(self, include_special: bool = False) -> List[str]:
         """
         Tum karakterleri listele
-        
+
         Args:
-            include_special: Ozel token'lari dahil et (BLANK, UNK)
-            
+            include_special: Ozel token'lari dahil et (BLANK, UNK, SOS, EOS)
+
         Returns:
             Karakter listesi
         """
+        special = {self.BLANK_TOKEN, self.UNK_TOKEN, self.SOS_TOKEN, self.EOS_TOKEN}
         if include_special:
             return list(self.char_to_idx.keys())
         else:
-            chars = []
-            for char in self.char_to_idx.keys():
-                if char not in [self.BLANK_TOKEN, self.UNK_TOKEN]:
-                    chars.append(char)
-            return chars
+            return [ch for ch in self.char_to_idx if ch not in special]
     
     def __repr__(self) -> str:
         return f"Vocabulary(size={self.size}, chars='{self.chars[:20]}...')"

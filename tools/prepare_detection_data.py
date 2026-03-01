@@ -160,7 +160,7 @@ def convert_icdar_to_json(icdar_dir: str, output_file: str):
                         texts.append(text)
                     else:
                         texts.append('')
-                except:
+                except Exception:
                     continue
         
         if boxes:
@@ -200,7 +200,7 @@ def show_dataset_info():
    - https://www.robots.ox.ac.uk/~vgg/data/scenetext/ adresinden indir
    - DataSets/SynthText/ klasorune cikar
    - Egitim:
-     python training/train_detection_advanced.py \\
+     python training/train_detection.py \\
        --dataset synthtext \\
        --data_dir DataSets/SynthText \\
        --epochs 50 \\
@@ -210,7 +210,7 @@ def show_dataset_info():
    - https://rrc.cvc.uab.es/?ch=4 adresinden indir
    - DataSets/ICDAR2015/train/ klasorune cikar
    - Egitim:
-     python training/train_detection_advanced.py \\
+     python training/train_detection.py \\
        --dataset icdar \\
        --data_dir DataSets/ICDAR2015/train \\
        --val_dir DataSets/ICDAR2015/test \\
@@ -219,7 +219,7 @@ def show_dataset_info():
 
 3. Kendi Veriniz:
    - JSON format: [{"image_path": "img.jpg", "boxes": [[[x1,y1],[x2,y2],[x3,y3],[x4,y4]]]}]
-   - python training/train_detection_advanced.py \\
+   - python training/train_detection.py \\
        --dataset custom \\
        --data_dir your_data_folder
 """)

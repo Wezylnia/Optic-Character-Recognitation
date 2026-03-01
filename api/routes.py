@@ -13,8 +13,8 @@ import cv2
 import numpy as np
 
 from api.schemas import (
-    OCRRequest, OCRResponse, ErrorResponse, BatchOCRResponse,
-    HealthResponse, TextBlock, BoundingBox, Table, TableCell,
+    OCRResponse, ErrorResponse, BatchOCRResponse,
+    HealthResponse, TextBlock, BoundingBox,
     OutputFormat
 )
 
@@ -58,7 +58,6 @@ async def ocr_single(
     file: UploadFile = File(..., description="Gorsel dosyasi"),
     output_format: OutputFormat = Form(default=OutputFormat.JSON),
     spell_check: bool = Form(default=True),
-    detect_tables: bool = Form(default=False),
     language: str = Form(default="tr")
 ):
     """Tek gorsel icin OCR"""
@@ -82,7 +81,7 @@ async def ocr_single(
         
         # OCR
         pipeline = get_ocr_pipeline()
-        result = pipeline.recognize(image)
+        result = pipeline.recognize(image, spell_check=spell_check, language=language)
         
         # Yaniti olustur
         blocks = []
@@ -99,35 +98,10 @@ async def ocr_single(
                 )
             ))
         
-        # Tablo algilama
-        tables = []
-        if detect_tables:
-            from ocr_engine.postprocessing.text_merger import TableDetector, TextLine
-            
-            detector = TableDetector()
-            text_lines = [
-                TextLine(text=tb.text, box=tb.box, confidence=tb.confidence)
-                for tb in result.text_boxes
-            ]
-            
-            table_data = detector.detect_table(text_lines)
-            if table_data:
-                cells = []
-                for r, row in enumerate(table_data):
-                    for c, cell_text in enumerate(row):
-                        cells.append(TableCell(row=r, col=c, text=cell_text))
-                
-                tables.append(Table(
-                    rows=len(table_data),
-                    cols=len(table_data[0]) if table_data else 0,
-                    cells=cells
-                ))
-        
         return OCRResponse(
             success=True,
             text=result.text,
             blocks=blocks,
-            tables=tables,
             processing_time=result.processing_time,
             image_size={"width": w, "height": h}
         )
@@ -147,7 +121,8 @@ async def ocr_single(
 async def ocr_batch(
     files: List[UploadFile] = File(..., description="Gorsel dosyalari"),
     output_format: OutputFormat = Form(default=OutputFormat.JSON),
-    spell_check: bool = Form(default=True)
+    spell_check: bool = Form(default=True),
+    language: str = Form(default="tr")
 ):
     """Toplu OCR"""
     
@@ -161,9 +136,9 @@ async def ocr_batch(
         try:
             content = await file.read()
             image = image_to_numpy(content)
-            
+
             h, w = image.shape[:2]
-            result = pipeline.recognize(image)
+            result = pipeline.recognize(image, spell_check=spell_check, language=language)
             
             blocks = [
                 TextBlock(
@@ -181,7 +156,6 @@ async def ocr_batch(
                 success=True,
                 text=result.text,
                 blocks=blocks,
-                tables=[],
                 processing_time=result.processing_time,
                 image_size={"width": w, "height": h},
                 metadata={"filename": file.filename}
@@ -193,7 +167,6 @@ async def ocr_batch(
                 success=False,
                 text="",
                 blocks=[],
-                tables=[],
                 processing_time=0,
                 image_size={"width": 0, "height": 0},
                 metadata={"filename": file.filename, "error": str(e)}
@@ -212,76 +185,17 @@ async def ocr_batch(
 
 @router.post(
     "/ocr/table",
-    response_model=OCRResponse,
     summary="Tablo OCR",
-    description="Tablo iceren gorsellerden yapi koruyarak metin cikarir"
+    description="Gorsel icindeki tablodan metin cikarir (henuz desteklenmiyor)"
 )
 async def ocr_table(
     file: UploadFile = File(..., description="Gorsel dosyasi")
 ):
-    """Tablo OCR"""
-    
-    try:
-        content = await file.read()
-        image = image_to_numpy(content)
-        
-        h, w = image.shape[:2]
-        
-        pipeline = get_ocr_pipeline()
-        result = pipeline.recognize(image)
-        
-        # Tablo algilama
-        from ocr_engine.postprocessing.text_merger import TableDetector, TextLine
-        
-        detector = TableDetector()
-        text_lines = [
-            TextLine(text=tb.text, box=tb.box, confidence=tb.confidence)
-            for tb in result.text_boxes
-        ]
-        
-        tables = []
-        table_data = detector.detect_table(text_lines)
-        
-        if table_data:
-            cells = []
-            for r, row in enumerate(table_data):
-                for c, cell_text in enumerate(row):
-                    cells.append(TableCell(row=r, col=c, text=cell_text))
-            
-            tables.append(Table(
-                rows=len(table_data),
-                cols=len(table_data[0]) if table_data else 0,
-                cells=cells
-            ))
-            
-            # Tablo formatinda metin
-            text = detector.table_to_text(table_data)
-        else:
-            text = result.text
-        
-        blocks = [
-            TextBlock(
-                text=tb.text,
-                confidence=tb.confidence,
-                bounding_box=BoundingBox(
-                    x1=tb.x1, y1=tb.y1, x2=tb.x2, y2=tb.y2,
-                    polygon=tb.box.tolist()
-                )
-            )
-            for tb in result.text_boxes
-        ]
-        
-        return OCRResponse(
-            success=True,
-            text=text,
-            blocks=blocks,
-            tables=tables,
-            processing_time=result.processing_time,
-            image_size={"width": w, "height": h}
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Tablo OCR hatasi: {str(e)}")
+    """Tablo OCR — henuz implement edilmedi"""
+    raise HTTPException(
+        status_code=501,
+        detail="Tablo OCR henuz desteklenmiyor. Yakin zamanda eklenecek."
+    )
 
 
 @router.get(

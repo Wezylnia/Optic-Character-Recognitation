@@ -27,8 +27,8 @@ from datetime import datetime, timedelta
 from ocr_engine.recognition.vocab import Vocabulary
 from ocr_engine.recognition.model import CRNN, CRNNLoss
 from ocr_engine.recognition.decoder import CTCDecoder
-from training.dataset import RecognitionDataset, collate_recognition
-from training.augmentation import RecognitionAugmentor
+from training.recognition_dataset import RecognitionDataset, collate_recognition
+from training.augmentation_recognition import RecognitionAugmentor
 
 
 def set_seed(seed=42):
@@ -81,7 +81,7 @@ class AdvancedTrainer:
         self.use_amp = use_amp and torch.cuda.is_available()
         
         # Mixed Precision Training icin scaler
-        self.scaler = torch.cuda.amp.GradScaler() if self.use_amp else None
+        self.scaler = torch.amp.GradScaler('cuda') if self.use_amp else None
         
         # Model
         model_cfg = config.get('recognition', {}).get('model', {})
@@ -107,6 +107,7 @@ class AdvancedTrainer:
         self.best_val_acc = 0
         self.epoch = 0
         self.global_step = 0
+        self.scheduler = None  # train() icinde olusturulacak
         
         # Model parametreleri
         total_params = sum(p.numel() for p in self.model.parameters())
@@ -373,6 +374,7 @@ class AdvancedTrainer:
             'epoch': self.epoch,
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
+            'scheduler_state_dict': self.scheduler.state_dict() if self.scheduler else None,
             'best_val_acc': self.best_val_acc,
             'global_step': self.global_step,
             'vocab_size': self.vocab.size
@@ -380,12 +382,14 @@ class AdvancedTrainer:
     
     def load_checkpoint(self, path):
         """Checkpoint yukle"""
-        checkpoint = torch.load(path, map_location=self.device)
+        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.epoch = checkpoint['epoch']
         self.best_val_acc = checkpoint.get('best_val_acc', 0)
         self.global_step = checkpoint.get('global_step', 0)
+        if checkpoint.get('scheduler_state_dict') and self.scheduler is not None:
+            self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         print(f"[CHECKPOINT] Yuklendi: epoch {self.epoch}, best_acc {self.best_val_acc*100:.2f}%")
 
 

@@ -16,15 +16,27 @@ preprocessing:
     method: "adaptive"  # adaptive, otsu, sauvola
     block_size: 11
     c: 2
-  
+
   denoise:
     enabled: true
     method: "bilateral"  # bilateral, gaussian, nlmeans
     strength: 10
-  
+
   deskew:
     enabled: true
     max_angle: 45
+
+  # Goruntu kalite iyilestirme
+  enhance:
+    enabled: true
+    mode: "auto"          # auto | document | handwriting | none
+    clahe_clip_limit: 2.0
+    clahe_tile_size: [8, 8]
+    sharpen_strength: 0.5
+    shadow_removal: true
+    # auto modda esikler
+    auto_quality_threshold: 0.4    # < bu skorun alti -> document mode
+    auto_sharpness_threshold: 50.0 # < bu deger     -> handwriting mode
 
 # Text Detection (DBNet) Settings
 detection:
@@ -42,8 +54,12 @@ detection:
   
   weights_path: "ocr_engine/detection/weights/dbnet.pth"
 
-# Text Recognition (CRNN) Settings
+# Text Recognition (CRNN / AttentionCRNN) Settings
 recognition:
+  # Mod: "ctc"  -> standart CRNN + CTC loss (hizli, basili metin)
+  #       "attention" -> AttentionCRNN (el yazisi, egri metin)
+  mode: "ctc"
+
   model:
     input_height: 32
     input_width: 256  # Default width (can be dynamic)
@@ -51,13 +67,20 @@ recognition:
     hidden_size: 256
     num_layers: 2
     dropout: 0.1
-  
+
   inference:
     beam_width: 5
     max_length: 100
     variable_width: true  # Enable dynamic width based on text length
-  
+    decoder: "prefix"     # greedy | prefix  (CTCPrefixDecoder daha dogru)
+
   weights_path: "ocr_engine/recognition/weights/crnn.pth"
+
+  # Attention modu icin ek ayarlar
+  attention:
+    attn_dim: 256
+    teacher_forcing_ratio: 0.5  # Egitimde teacher forcing orani
+    weights_path: "ocr_engine/recognition/weights/attention_crnn.pth"
 
 # Training Settings
 training:
@@ -81,6 +104,9 @@ training:
     scale_range: [0.8, 1.2]
     blur_prob: 0.3
     noise_prob: 0.3
+    elastic_prob: 0.3
+    grid_distort_prob: 0.2
+    handwriting_mode: false   # true -> el yazisi odakli augmentation
 
 # Post-processing Settings
 postprocessing:
@@ -92,6 +118,17 @@ postprocessing:
   text_merger:
     line_threshold: 10  # pixels
     paragraph_threshold: 20  # pixels
+
+  # Layout analizi
+  layout:
+    enabled: true
+    heading_height_ratio: 1.5    # median yuksekligin kati
+    subhead_height_ratio: 1.25
+    caption_height_ratio: 0.75
+    column_gap_ratio: 0.04       # goruntu genisligine oran
+    max_columns: 4
+    line_merge_gap_ratio: 0.5
+    paragraph_gap_ratio: 1.2
 
 # API Settings
 api:

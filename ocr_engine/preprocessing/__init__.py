@@ -7,13 +7,15 @@ from .binarization import Binarizer
 from .deskew import Deskewer
 from .denoise import Denoiser
 from .perspective import PerspectiveCorrector, DocumentScanner, auto_correct_perspective
+from .enhance import ImageEnhancer
 
 __all__ = [
-    "ImageProcessor", 
-    "Binarizer", 
-    "Deskewer", 
+    "ImageProcessor",
+    "Binarizer",
+    "Deskewer",
     "Denoiser",
     "PerspectiveCorrector",
     "DocumentScanner",
-    "auto_correct_perspective"
+    "auto_correct_perspective",
+    "ImageEnhancer",
 ]

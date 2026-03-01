@@ -11,7 +11,6 @@ const overlayCanvas = document.getElementById('overlayCanvas');
 const resultSection = document.getElementById('resultSection');
 const resultText = document.getElementById('resultText');
 const resultJson = document.getElementById('resultJson');
-const resultTable = document.getElementById('resultTable');
 const resultMeta = document.getElementById('resultMeta');
 const loading = document.getElementById('loading');
 const error = document.getElementById('error');
@@ -19,9 +18,7 @@ const errorText = document.getElementById('errorText');
 const clearBtn = document.getElementById('clearBtn');
 const copyBtn = document.getElementById('copyBtn');
 const downloadBtn = document.getElementById('downloadBtn');
-const detectTables = document.getElementById('detectTables');
 const spellCheck = document.getElementById('spellCheck');
-const tableTab = document.getElementById('tableTab');
 
 // State
 let currentFile = null;
@@ -112,7 +109,6 @@ async function performOCR(file) {
     try {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('detect_tables', detectTables.checked);
         formData.append('spell_check', spellCheck.checked);
         
         const response = await fetch(`${API_URL}/ocr`, {
@@ -145,14 +141,6 @@ function displayResult(result) {
     // JSON tab
     resultJson.textContent = JSON.stringify(result, null, 2);
     
-    // Table tab
-    if (result.tables && result.tables.length > 0) {
-        tableTab.style.display = 'block';
-        renderTable(result.tables[0]);
-    } else {
-        tableTab.style.display = 'none';
-    }
-    
     // Meta info
     resultMeta.innerHTML = `
         <strong>Isleme suresi:</strong> ${result.processing_time.toFixed(3)}s | 
@@ -161,30 +149,6 @@ function displayResult(result) {
     `;
     
     resultSection.style.display = 'block';
-}
-
-function renderTable(table) {
-    let html = '<table><thead><tr>';
-    
-    // Header (first row)
-    for (let c = 0; c < table.cols; c++) {
-        const cell = table.cells.find(cell => cell.row === 0 && cell.col === c);
-        html += `<th>${cell ? cell.text : ''}</th>`;
-    }
-    html += '</tr></thead><tbody>';
-    
-    // Body rows
-    for (let r = 1; r < table.rows; r++) {
-        html += '<tr>';
-        for (let c = 0; c < table.cols; c++) {
-            const cell = table.cells.find(cell => cell.row === r && cell.col === c);
-            html += `<td>${cell ? cell.text : ''}</td>`;
-        }
-        html += '</tr>';
-    }
-    
-    html += '</tbody></table>';
-    resultTable.innerHTML = html;
 }
 
 function drawBoxes(blocks) {

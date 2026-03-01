@@ -34,10 +34,6 @@
                 <!-- Options -->
                 <div class="options">
                     <label class="checkbox-label">
-                        <input type="checkbox" id="detectTables">
-                        <span>Tablo Algilama</span>
-                    </label>
-                    <label class="checkbox-label">
                         <input type="checkbox" id="spellCheck" checked>
                         <span>Yazim Kontrolu</span>
                     </label>
@@ -69,7 +65,6 @@
                 <div class="result-tabs">
                     <button class="tab-btn active" data-tab="text">Metin</button>
                     <button class="tab-btn" data-tab="json">JSON</button>
-                    <button class="tab-btn" data-tab="table" id="tableTab" style="display: none;">Tablo</button>
                 </div>
 
                 <div class="result-content">
@@ -78,9 +73,6 @@
                     </div>
                     <div class="tab-content" id="jsonContent">
                         <pre id="resultJson"></pre>
-                    </div>
-                    <div class="tab-content" id="tableContent">
-                        <div id="resultTable"></div>
                     </div>
                 </div>
 

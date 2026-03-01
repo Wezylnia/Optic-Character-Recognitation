@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 # Proje kokunu path'e ekle
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
 import cv2
@@ -264,7 +264,7 @@ def test_full_pipeline():
         print(f"  Preprocess hatasi: {e}")
     
     print("\n[BILGI] Tam pipeline testi icin detection agirliklari gerekli!")
-    print("        python training/train_detection_advanced.py ile egitim yapin")
+    print("        python training/train_detection.py ile egitim yapin")
     
     return True
 

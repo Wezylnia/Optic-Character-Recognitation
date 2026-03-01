@@ -9,6 +9,7 @@ Bu modul, gorsellerden metin cikarma icin gerekli tum bilesenleri icerir:
 """
 
 from .pipeline import OCRPipeline
+from .pipeline_types import TextBox, OCRResult
 
 __version__ = "1.0.0"
-__all__ = ["OCRPipeline"]
+__all__ = ["OCRPipeline", "TextBox", "OCRResult"]

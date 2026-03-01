@@ -14,31 +14,6 @@ class OutputFormat(str, Enum):
     STRUCTURED = "structured"
 
 
-class OCRRequest(BaseModel):
-    """OCR istek modeli"""
-    
-    output_format: OutputFormat = Field(
-        default=OutputFormat.JSON,
-        description="Cikis formati"
-    )
-    detect_tables: bool = Field(
-        default=False,
-        description="Tablo algilama etkinlestir"
-    )
-    spell_check: bool = Field(
-        default=True,
-        description="Yazim kontrolu etkinlestir"
-    )
-    preserve_layout: bool = Field(
-        default=False,
-        description="Sayfa duzeni koru"
-    )
-    language: str = Field(
-        default="tr",
-        description="Dil (tr, en, auto)"
-    )
-
-
 class BoundingBox(BaseModel):
     """Metin kutusu koordinatlari"""
     
@@ -60,24 +35,6 @@ class TextBlock(BaseModel):
     bounding_box: BoundingBox = Field(..., description="Konum")
 
 
-class TableCell(BaseModel):
-    """Tablo hücresi"""
-    
-    row: int = Field(..., description="Satir indeksi")
-    col: int = Field(..., description="Sutun indeksi")
-    text: str = Field(..., description="Hücre metni")
-    bounding_box: Optional[BoundingBox] = None
-
-
-class Table(BaseModel):
-    """Tablo verisi"""
-    
-    rows: int = Field(..., description="Satir sayisi")
-    cols: int = Field(..., description="Sutun sayisi")
-    cells: List[TableCell] = Field(..., description="Hücre listesi")
-    bounding_box: Optional[BoundingBox] = None
-
-
 class OCRResponse(BaseModel):
     """OCR yanit modeli"""
     
@@ -86,10 +43,6 @@ class OCRResponse(BaseModel):
     blocks: List[TextBlock] = Field(
         default=[],
         description="Metin bloklari"
-    )
-    tables: List[Table] = Field(
-        default=[],
-        description="Tespit edilen tablolar"
     )
     processing_time: float = Field(
         ...,
@@ -112,13 +65,6 @@ class ErrorResponse(BaseModel):
     error: str = Field(..., description="Hata mesaji")
     error_code: str = Field(..., description="Hata kodu")
     details: Optional[Dict[str, Any]] = None
-
-
-class BatchOCRRequest(BaseModel):
-    """Toplu OCR istegi"""
-    
-    output_format: OutputFormat = Field(default=OutputFormat.JSON)
-    spell_check: bool = Field(default=True)
 
 
 class BatchOCRResponse(BaseModel):
