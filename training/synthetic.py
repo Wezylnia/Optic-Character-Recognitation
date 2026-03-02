@@ -95,18 +95,31 @@ class SyntheticTextGenerator:
                 for f in sorted(fonts_dir.rglob(ext)):
                     add(str(f))
 
-        # 3. Windows sistem fontlari (Arial, Times, Calibri, Georgia, Courier…)
-        # Sembol / dekoratif fontlar atlandi (belge OCR'da kullanilmaz)
+        # 3. Sistem fontlari — Windows ve Linux icin ayri dizinler
+        # Sembol / dekoratif fontlar atlanir (belge OCR'da kullanilmaz)
         _SKIP_KEYWORDS = (
             'wing', 'ding', 'symbol', 'webding', 'marlett',
-            'mtextra', 'bssym', 'symbol', 'emoji',
+            'mtextra', 'bssym', 'emoji',
         )
-        win_fonts = _Path('C:/Windows/Fonts')
-        if win_fonts.exists():
+
+        _sys_font_dirs = []
+        import platform as _platform
+        if _platform.system() == 'Windows':
+            _sys_font_dirs = [_Path('C:/Windows/Fonts')]
+        else:
+            # Linux (Kaggle, Ubuntu vb.)
+            _sys_font_dirs = [
+                _Path('/usr/share/fonts'),
+                _Path('/usr/local/share/fonts'),
+                _Path('/usr/share/truetype'),
+            ]
+
+        for _font_dir in _sys_font_dirs:
+            if not _font_dir.exists():
+                continue
             for ext in ('*.ttf', '*.otf'):
-                for f in sorted(win_fonts.glob(ext)):
-                    name_lower = f.name.lower()
-                    if any(kw in name_lower for kw in _SKIP_KEYWORDS):
+                for f in sorted(_font_dir.rglob(ext)):
+                    if any(kw in f.name.lower() for kw in _SKIP_KEYWORDS):
                         continue
                     add(str(f))
 
