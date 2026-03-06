@@ -1,6 +1,4 @@
-"""
-Metin kutusu siralama ve satir gruplama yardimci fonksiyonlari
-"""
+"""Metin kutusu siralama ve satir gruplama."""
 
 import cv2
 import math
@@ -8,20 +6,8 @@ import numpy as np
 from typing import List, Tuple
 
 
-def sort_boxes_by_position(
-    boxes: List[np.ndarray],
-    line_threshold: int = 10
-) -> List[np.ndarray]:
-    """
-    Kutulari okuma sirasina gore sirala (sol-ustten sag-alta)
-
-    Args:
-        boxes: Kutu listesi
-        line_threshold: Ayni satir icin Y toleransi
-
-    Returns:
-        Siralanmis kutu listesi
-    """
+def sort_boxes_by_position(boxes: List[np.ndarray], line_threshold: int = 10) -> List[np.ndarray]:
+    """Kutulari okuma sirasina gore sirala (sol-ustten sag-alta)."""
     if not boxes:
         return boxes
 
@@ -56,15 +42,7 @@ def sort_boxes_by_position(
 
 
 def get_box_rotation_angle(box: np.ndarray) -> float:
-    """
-    Kutunun rotasyon acisini hesapla
-
-    Args:
-        box: 4 noktali polygon [4, 2]
-
-    Returns:
-        Rotasyon acisi (derece, -45 ile 45 arasi)
-    """
+    """Kutunun rotasyon acisini hesapla (-45 ile 45 arasi)."""
     rect = cv2.minAreaRect(box.astype(np.float32))
     angle = rect[2]
 
@@ -96,16 +74,7 @@ def order_points(pts: np.ndarray) -> np.ndarray:
 
 
 def crop_polygon(image: np.ndarray, box: np.ndarray) -> np.ndarray:
-    """
-    Polygon seklindeki bolgeden crop al (perspektif duzeltmeli)
-
-    Args:
-        image: Kaynak gorsel
-        box: 4 noktali polygon [4, 2]
-
-    Returns:
-        Crop edilmis gorsel
-    """
+    """Polygon seklindeki bolgeden perspektif-duzeltmeli crop al."""
     pts = order_points(box)
 
     width = int(max(
@@ -133,22 +102,8 @@ def crop_polygon(image: np.ndarray, box: np.ndarray) -> np.ndarray:
     return warped
 
 
-def correct_box_rotation(
-    image: np.ndarray,
-    box: np.ndarray,
-    angle_threshold: float = 5.0
-) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Text region icin rotasyon duzeltmesi
-
-    Args:
-        image: Kaynak gorsel
-        box: Text bounding box [4, 2]
-        angle_threshold: Duzeltme yapilacak minimum aci
-
-    Returns:
-        (duzeltilmis_crop, yeni_box)
-    """
+def correct_box_rotation(image: np.ndarray, box: np.ndarray, angle_threshold: float = 5.0) -> Tuple[np.ndarray, np.ndarray]:
+    """Text region'i dondurerek crop al."""
     angle = get_box_rotation_angle(box)
 
     if abs(angle) < angle_threshold:
@@ -198,38 +153,14 @@ def correct_box_rotation(
 
 
 class AdaptiveLineGrouper:
-    """
-    Adaptif satir gruplama
+    """Sabit threshold yerine kutu yuksekliklerine gore dinamik satir gruplama."""
 
-    Sabit threshold yerine box yuksekliklerine gore dinamik gruplama yapar.
-    """
-
-    def __init__(
-        self,
-        overlap_threshold: float = 0.5,
-        y_tolerance_ratio: float = 0.5
-    ):
-        """
-        Args:
-            overlap_threshold: Ayni satir icin minimum Y overlap orani
-            y_tolerance_ratio: Box yuksekligine gore Y toleransi orani
-        """
+    def __init__(self, overlap_threshold: float = 0.5, y_tolerance_ratio: float = 0.5):
         self.overlap_threshold = overlap_threshold
         self.y_tolerance_ratio = y_tolerance_ratio
 
-    def group_into_lines(
-        self,
-        boxes: List[np.ndarray]
-    ) -> List[List[np.ndarray]]:
-        """
-        Kutulari satirlara grupla
-
-        Args:
-            boxes: Kutu listesi
-
-        Returns:
-            Satir listesi, her satir kutu listesi icerir
-        """
+    def group_into_lines(self, boxes: List[np.ndarray]) -> List[List[np.ndarray]]:
+        """Kutulari satirlara grupla."""
         if not boxes:
             return []
 
@@ -299,49 +230,16 @@ class AdaptiveLineGrouper:
 
         return overlap_ratio >= self.overlap_threshold or y_diff <= y_tolerance
 
-    def group_and_sort(
-        self,
-        boxes: List[np.ndarray]
-    ) -> List[np.ndarray]:
-        """
-        Kutulari satirlara grupla ve duz liste olarak dondur
-
-        Args:
-            boxes: Kutu listesi
-
-        Returns:
-            Okuma sirasina gore siralanmis kutu listesi
-        """
-        lines = self.group_into_lines(boxes)
-        result = []
-        for line in lines:
-            result.extend(line)
-        return result
+    def group_and_sort(self, boxes: List[np.ndarray]) -> List[np.ndarray]:
+        """Kutulari satirlara grupla ve duz liste olarak dondur."""
+        return [b for line in self.group_into_lines(boxes) for b in line]
 
 
 def adaptive_sort_boxes(boxes: List[np.ndarray]) -> List[np.ndarray]:
-    """
-    Kutulari adaptif olarak okuma sirasina gore sirala
-
-    Args:
-        boxes: Kutu listesi
-
-    Returns:
-        Siralanmis kutu listesi
-    """
-    grouper = AdaptiveLineGrouper()
-    return grouper.group_and_sort(boxes)
+    """Kutulari adaptif olarak okuma sirasina gore sirala."""
+    return AdaptiveLineGrouper().group_and_sort(boxes)
 
 
 def group_boxes_into_lines(boxes: List[np.ndarray]) -> List[List[np.ndarray]]:
-    """
-    Kutulari satirlara grupla
-
-    Args:
-        boxes: Kutu listesi
-
-    Returns:
-        Satir listesi
-    """
-    grouper = AdaptiveLineGrouper()
-    return grouper.group_into_lines(boxes)
+    """Kutulari satirlara grupla."""
+    return AdaptiveLineGrouper().group_into_lines(boxes)

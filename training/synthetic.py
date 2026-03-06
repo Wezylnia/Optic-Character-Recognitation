@@ -19,7 +19,7 @@ class SyntheticTextGenerator:
         vocab: Vocabulary,
         font_paths: Optional[List[str]] = None,
         font_sizes: Tuple[int, int] = (20, 48),
-        image_height: int = 32,
+        image_height: int = 48,
         max_text_length: int = 25,
         bg_colors: List[Tuple[int, int, int]] = None,
         text_colors: List[Tuple[int, int, int]] = None

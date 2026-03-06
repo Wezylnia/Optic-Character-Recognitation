@@ -39,7 +39,7 @@ class RecognitionDataset(Dataset):
         annotation_file: Optional[str] = None,
         data_dir: Optional[str] = None,
         vocab: Optional[Vocabulary] = None,
-        image_height: int = 32,
+        image_height: int = 48,
         image_width: int = 256,
         augmentor: Optional[Callable] = None,
         synthetic_ratio: float = 0.0,

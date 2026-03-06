@@ -55,7 +55,6 @@ def evaluate_recognition(
     device: str = 'cpu',
     batch_size: int = 128,
     max_samples: int = None,
-    encoder_type: str = 'vgg',
 ) -> dict:
     """
     Recognition modelini degerlendir.
@@ -91,7 +90,6 @@ def evaluate_recognition(
         input_channels=1,
         hidden_size=256,
         num_layers=2,
-        encoder_type=encoder_type,
     ).to(dev)
     state = ckpt.get('model_state_dict', ckpt)
     model.load_state_dict(state)
@@ -339,7 +337,7 @@ def main():
     rec.add_argument('--device',      default='cpu')
     rec.add_argument('--batch_size',  type=int, default=128)
     rec.add_argument('--max_samples', type=int, default=None)
-    rec.add_argument('--encoder_type', default='vgg', choices=['vgg', 'resnet'])
+    rec.add_argument('--encoder_type', default='resnet34', choices=['resnet34'])
     rec.add_argument('--output_json', default=None, help='Sonuclari JSON olarak kaydet')
 
     # -- detection --
@@ -363,7 +361,6 @@ def main():
             device       = args.device,
             batch_size   = args.batch_size,
             max_samples  = args.max_samples,
-            encoder_type = args.encoder_type,
         )
     else:
         metrics = evaluate_detection(

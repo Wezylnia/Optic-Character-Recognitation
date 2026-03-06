@@ -4,6 +4,7 @@ Detection modulu - Metin bolge tespiti (DBNet)
 
 from .model import DBNet
 from .postprocess import DBPostProcessor
+from .paddle_worker import PaddleDetector
 from .line_grouping import (
     sort_boxes_by_position,
     get_box_rotation_angle,
@@ -18,6 +19,7 @@ from .line_grouping import (
 __all__ = [
     "DBNet",
     "DBPostProcessor",
+    "PaddleDetector",
     "sort_boxes_by_position",
     "get_box_rotation_angle",
     "order_points",

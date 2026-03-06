@@ -1,6 +1,4 @@
-"""
-DBNet (Differentiable Binarization Network) metin tespit modeli
-"""
+"""DBNet metin tespit modeli — ResNet50 + FPN + Differentiable Binarization"""
 
 import torch
 import torch.nn as nn
@@ -26,9 +24,9 @@ def ConvBnRelu(
 
 
 class ResNetBackbone(nn.Module):
-    """ResNet backbone - feature extraction"""
+    """ResNet backbone — feature extraction."""
     
-    def __init__(self, backbone_name: str = "resnet18", pretrained: bool = True):
+    def __init__(self, backbone_name: str = "resnet50", pretrained: bool = True):
         super().__init__()
         
         if backbone_name == "resnet18":
@@ -51,31 +49,22 @@ class ResNetBackbone(nn.Module):
         self.layer3 = resnet.layer3  # 1/16
         self.layer4 = resnet.layer4  # 1/32
     
-    def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
-        """
-        Args:
-            x: Giris tensoru [B, 3, H, W]
-            
-        Returns:
-            4 seviye feature map listesi
-        """
+    def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
-        
-        c1 = self.layer1(x)   # 1/4
-        c2 = self.layer2(c1)  # 1/8
-        c3 = self.layer3(c2)  # 1/16
-        c4 = self.layer4(c3)  # 1/32
-        
+        c1 = self.layer1(x)
+        c2 = self.layer2(c1)
+        c3 = self.layer3(c2)
+        c4 = self.layer4(c3)
         return [c1, c2, c3, c4]
 
 
 class FPN(nn.Module):
-    """Feature Pyramid Network - multi-scale feature fusion"""
+    """Feature Pyramid Network."""
     
-    def __init__(self, in_channels: List[int], out_channels: int = 256):
+    def __init__(self, in_channels, out_channels=256):
         super().__init__()
         
         # Lateral connections (1x1 conv)
@@ -92,59 +81,21 @@ class FPN(nn.Module):
         
         self.out_channels = out_channels
     
-    def forward(self, features: List[torch.Tensor]) -> torch.Tensor:
-        """
-        Args:
-            features: Backbone feature maps [c1, c2, c3, c4]
-            
-        Returns:
-            Fused feature map
-        """
-        # Lateral connections
-        laterals = [
-            lateral_conv(feat)
-            for lateral_conv, feat in zip(self.lateral_convs, features)
-        ]
-        
-        # Top-down pathway
+    def forward(self, features):
+        laterals = [lc(f) for lc, f in zip(self.lateral_convs, features)]
         for i in range(len(laterals) - 1, 0, -1):
-            h, w = laterals[i - 1].shape[2:]
-            laterals[i - 1] = laterals[i - 1] + F.interpolate(
-                laterals[i],
-                size=(h, w),
-                mode='bilinear',
-                align_corners=False
-            )
-        
-        # Smooth
-        outputs = [
-            smooth_conv(lateral)
-            for smooth_conv, lateral in zip(self.smooth_convs, laterals)
-        ]
-        
-        # Hepsini ayni boyuta getir ve birlestir
+            h, w = laterals[i-1].shape[2:]
+            laterals[i-1] = laterals[i-1] + F.interpolate(laterals[i], (h, w), mode='bilinear', align_corners=False)
+        outputs = [sc(l) for sc, l in zip(self.smooth_convs, laterals)]
         target_h, target_w = outputs[0].shape[2:]
         fused = outputs[0]
         for out in outputs[1:]:
-            fused = fused + F.interpolate(
-                out,
-                size=(target_h, target_w),
-                mode='bilinear',
-                align_corners=False
-            )
-        
+            fused = fused + F.interpolate(out, (target_h, target_w), mode='bilinear', align_corners=False)
         return fused
 
 
 class DBHead(nn.Module):
-    """
-    Differentiable Binarization Head
-    
-    Outputs:
-        - probability map (text regions)
-        - threshold map (adaptive threshold)
-        - binary map (differentiable binarization)
-    """
+    """Differentiable Binarization Head."""
     
     def __init__(self, in_channels: int, k: int = 50):
         super().__init__()
@@ -170,76 +121,27 @@ class DBHead(nn.Module):
             nn.Sigmoid()
         )
     
-    def forward(
-        self,
-        x: torch.Tensor,
-        return_maps: bool = False
-    ) -> Dict[str, torch.Tensor]:
-        """
-        Args:
-            x: Feature map [B, C, H, W]
-            return_maps: Tum map'leri dondur
-            
-        Returns:
-            Dictionary: probability, threshold, binary maps
-        """
-        prob_map = self.prob_conv(x)
+    def forward(self, x, return_maps=False):
+        prob_map   = self.prob_conv(x)
         thresh_map = self.thresh_conv(x)
-        
-        # Differentiable binarization
-        # binary = 1 / (1 + exp(-k * (prob - thresh)))
-        binary_map = torch.reciprocal(
-            1 + torch.exp(-self.k * (prob_map - thresh_map))
-        )
-        
-        outputs = {
-            'prob_map': prob_map,
-            'binary_map': binary_map
-        }
-        
+        binary_map = torch.reciprocal(1 + torch.exp(-self.k * (prob_map - thresh_map)))
+        result = {'prob_map': prob_map, 'binary_map': binary_map}
         if return_maps:
-            outputs['thresh_map'] = thresh_map
-        
-        return outputs
+            result['thresh_map'] = thresh_map
+        return result
 
 
 class DBNet(nn.Module):
-    """
-    DBNet - Differentiable Binarization Network
+    """DBNet — Differentiable Binarization Network."""
     
-    Metin bolge tespiti icin end-to-end model.
-    """
-    
-    def __init__(
-        self,
-        backbone: str = "resnet18",
-        pretrained: bool = True,
-        fpn_channels: int = 256,
-        k: int = 50
-    ):
-        """
-        Args:
-            backbone: Backbone adi (resnet18 veya resnet50)
-            pretrained: Pre-trained agirliklar kullanilsin mi
-            fpn_channels: FPN cikis kanal sayisi
-            k: Binarization aggressiveness
-        """
+    def __init__(self, backbone="resnet50", pretrained=True, fpn_channels=256, k=50):
         super().__init__()
-        
-        # Backbone
         self.backbone = ResNetBackbone(backbone, pretrained)
-        
-        # Neck (FPN)
-        self.fpn = FPN(self.backbone.out_channels, fpn_channels)
-        
-        # Head
-        self.head = DBHead(fpn_channels, k)
-        
-        # Initialize weights
+        self.fpn      = FPN(self.backbone.out_channels, fpn_channels)
+        self.head     = DBHead(fpn_channels, k)
         self._init_weights()
     
     def _init_weights(self):
-        """Agirliklari initialize et (backbone haric)"""
         def _init(m):
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out')
@@ -251,121 +153,34 @@ class DBNet(nn.Module):
         self.fpn.apply(_init)
         self.head.apply(_init)
     
-    def forward(
-        self,
-        x: torch.Tensor,
-        return_maps: bool = False
-    ) -> Dict[str, torch.Tensor]:
-        """
-        Args:
-            x: Giris gorseli [B, 3, H, W]
-            return_maps: Threshold map'i de dondur
-            
-        Returns:
-            Dictionary: probability, binary, (optional: threshold) maps
-        """
-        # Feature extraction
-        features = self.backbone(x)
-        
-        # Feature fusion
-        fused = self.fpn(features)
-        
-        # Detection head
-        outputs = self.head(fused, return_maps)
-        
-        return outputs
-    
+    def forward(self, x, return_maps=False):
+        return self.head(self.fpn(self.backbone(x)), return_maps)
+
     @torch.no_grad()
-    def predict(
-        self,
-        x: torch.Tensor,
-        threshold: float = 0.3
-    ) -> torch.Tensor:
-        """
-        Inference icin basitlestirilmis metod
-        
-        Args:
-            x: Giris gorseli [B, 3, H, W]
-            threshold: Probability threshold
-            
-        Returns:
-            Binary prediction [B, 1, H, W]
-        """
+    def predict(self, x, threshold=0.3):
         self.eval()
-        outputs = self.forward(x, return_maps=False)
-        prob_map = outputs['prob_map']
-        return (prob_map > threshold).float()
+        return (self.forward(x)['prob_map'] > threshold).float()
 
 
 class DBLoss(nn.Module):
-    """
-    DBNet loss function
+    """L_total = L_prob + alpha*L_binary + beta*L_thresh"""
     
-    L = L_prob + alpha * L_binary + beta * L_thresh
-    """
-    
-    def __init__(
-        self,
-        alpha: float = 1.0,
-        beta: float = 10.0,
-        ohem_ratio: int = 3,
-        eps: float = 1e-6
-    ):
-        """
-        Args:
-            alpha: Binary loss weight
-            beta: Threshold loss weight
-            ohem_ratio: OHEM negative/positive ratio
-            eps: Numerical stability
-        """
+    def __init__(self, alpha=1.0, beta=10.0, ohem_ratio=3, eps=1e-6):
         super().__init__()
         self.alpha = alpha
-        self.beta = beta
+        self.beta  = beta
         self.ohem_ratio = ohem_ratio
-        self.eps = eps
+        self.eps   = eps
     
-    def forward(
-        self,
-        outputs: Dict[str, torch.Tensor],
-        gt_prob: torch.Tensor,
-        gt_thresh: torch.Tensor,
-        gt_mask: torch.Tensor
-    ) -> Dict[str, torch.Tensor]:
-        """
-        Args:
-            outputs: Model cikislari (prob_map, binary_map, thresh_map)
-            gt_prob: Ground truth probability map
-            gt_thresh: Ground truth threshold map
-            gt_mask: Valid region mask
-            
-        Returns:
-            Dictionary: total_loss, prob_loss, binary_loss, thresh_loss
-        """
-        prob_map = outputs['prob_map']
+    def forward(self, outputs, gt_prob, gt_thresh, gt_mask):
+        prob_map   = outputs['prob_map']
         binary_map = outputs['binary_map']
         thresh_map = outputs.get('thresh_map')
-        
-        # Probability loss (BCE with OHEM)
-        prob_loss = self._balanced_bce_loss(prob_map, gt_prob, gt_mask)
-        
-        # Binary loss (Dice loss)
+        prob_loss   = self._balanced_bce_loss(prob_map, gt_prob, gt_mask)
         binary_loss = self._dice_loss(binary_map, gt_prob, gt_mask)
-        
-        # Threshold loss (L1)
-        if thresh_map is not None:
-            thresh_loss = self._l1_loss(thresh_map, gt_thresh, gt_prob)
-        else:
-            thresh_loss = torch.tensor(0.0, device=prob_map.device)
-        
-        # Total loss
-        total_loss = prob_loss + self.alpha * binary_loss + self.beta * thresh_loss
-        
-        return {
-            'total_loss': total_loss,
-            'prob_loss': prob_loss,
-            'binary_loss': binary_loss,
-            'thresh_loss': thresh_loss
-        }
+        thresh_loss = self._l1_loss(thresh_map, gt_thresh, gt_prob) if thresh_map is not None else torch.tensor(0.0, device=prob_map.device)
+        total = prob_loss + self.alpha * binary_loss + self.beta * thresh_loss
+        return {'total_loss': total, 'prob_loss': prob_loss, 'binary_loss': binary_loss, 'thresh_loss': thresh_loss}
     
     def _balanced_bce_loss(
         self,
@@ -427,26 +242,8 @@ class DBLoss(nn.Module):
         return loss.sum() / (mask.sum() + self.eps)
 
 
-def build_dbnet(
-    backbone: str = "resnet18",
-    pretrained: bool = True,
-    weights_path: Optional[str] = None
-) -> DBNet:
-    """
-    DBNet model olustur
-    
-    Args:
-        backbone: Backbone adi
-        pretrained: Backbone icin pre-trained agirliklar
-        weights_path: Model agirlik dosyasi
-        
-    Returns:
-        DBNet model
-    """
+def build_dbnet(backbone="resnet50", pretrained=True, weights_path=None):
     model = DBNet(backbone=backbone, pretrained=pretrained)
-    
     if weights_path:
-        state_dict = torch.load(weights_path, map_location='cpu', weights_only=False)
-        model.load_state_dict(state_dict)
-    
+        model.load_state_dict(torch.load(weights_path, map_location='cpu', weights_only=False))
     return model

@@ -6,8 +6,9 @@ from .image_utils import ImageProcessor
 from .binarization import Binarizer
 from .deskew import Deskewer
 from .denoise import Denoiser
-from .perspective import PerspectiveCorrector, DocumentScanner, auto_correct_perspective
+from .perspective import PerspectiveCorrector
 from .enhance import ImageEnhancer
+from .preprocessor import Preprocessor
 
 __all__ = [
     "ImageProcessor",
@@ -15,7 +16,6 @@ __all__ = [
     "Deskewer",
     "Denoiser",
     "PerspectiveCorrector",
-    "DocumentScanner",
-    "auto_correct_perspective",
     "ImageEnhancer",
+    "Preprocessor",
 ]

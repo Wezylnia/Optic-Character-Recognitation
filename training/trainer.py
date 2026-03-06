@@ -88,7 +88,7 @@ class RecognitionTrainer:
                 num_layers     = model_cfg.get("num_layers", 2),
                 attn_dim       = attn_cfg.get("attn_dim", 256),
                 dropout        = model_cfg.get("dropout", 0.1),
-                encoder_type   = "vgg",
+                encoder_type   = "resnet34",
                 sos_idx        = vocab.sos_idx,
                 eos_idx        = vocab.eos_idx,
             ).to(self.device)
@@ -104,7 +104,7 @@ class RecognitionTrainer:
                 hidden_size    = model_cfg.get("hidden_size", 256),
                 num_layers     = model_cfg.get("num_layers", 2),
                 dropout        = model_cfg.get("dropout", 0.1),
-                encoder_type   = model_cfg.get("encoder_type", "vgg"),
+                encoder_type   = model_cfg.get("encoder_type", "resnet34"),
             ).to(self.device)
             self.criterion     = CRNNLoss(blank_idx=vocab.blank_idx)
             self.decoder       = CTCDecoder(vocab)

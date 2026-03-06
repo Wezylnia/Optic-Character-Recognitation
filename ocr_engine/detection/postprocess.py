@@ -316,56 +316,6 @@ class DBPostProcessor:
             
         except Exception:
             return 0.0
-    
-    def visualize(
-        self,
-        image: np.ndarray,
-        boxes: List[np.ndarray],
-        color: Tuple[int, int, int] = (0, 255, 0),
-        thickness: int = 2
-    ) -> np.ndarray:
-        """
-        Kutulari gorsel uzerinde ciz
-        
-        Args:
-            image: Gorsel
-            boxes: Kutu listesi
-            color: Cizgi rengi (BGR)
-            thickness: Cizgi kalinligi
-            
-        Returns:
-            Kutulari cizilmis gorsel
-        """
-        result = image.copy()
-        
-        for box in boxes:
-            pts = box.astype(np.int32).reshape((-1, 1, 2))
-            cv2.polylines(result, [pts], True, color, thickness)
-        
-        return result
-
-
-def boxes_to_rects(boxes: List[np.ndarray]) -> List[Tuple[int, int, int, int]]:
-    """
-    Poligon kutulari dikdortgene donustur
-    
-    Args:
-        boxes: Poligon kutulari listesi [N, 4, 2]
-        
-    Returns:
-        Dikdortgen listesi [(x, y, w, h), ...]
-    """
-    rects = []
-    for box in boxes:
-        x_min = int(np.min(box[:, 0]))
-        y_min = int(np.min(box[:, 1]))
-        x_max = int(np.max(box[:, 0]))
-        y_max = int(np.max(box[:, 1]))
-        
-        rects.append((x_min, y_min, x_max - x_min, y_max - y_min))
-    
-    return rects
-
 
 # ---------------------------------------------------------------------------
 # Backward-compat shims – real implementations live in line_grouping.py

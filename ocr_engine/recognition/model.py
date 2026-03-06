@@ -1,383 +1,192 @@
-"""
-CRNN (CNN + RNN + CTC) metin tanima modeli
-"""
+"""CRNN metin tanima modeli — ResNet34 + BiLSTM + CTC"""
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple
+from typing import Optional
 
 
 class BidirectionalLSTM(nn.Module):
-    """Bidirectional LSTM blogu"""
-    
-    def __init__(
-        self,
-        input_size: int,
-        hidden_size: int,
-        output_size: int,
-        dropout: float = 0.0
-    ):
+    def __init__(self, input_size, hidden_size, output_size, dropout=0.0):
         super().__init__()
-        # dropout nn.LSTM'e VERILMEZ (num_layers=1 olduğunda PyTorch uyarı üretir).
-        # Yerine ayrı nn.Dropout katmanı kullanılır — davranış aynıdır.
-        self.lstm = nn.LSTM(
-            input_size,
-            hidden_size,
-            bidirectional=True,
-            batch_first=True
-        )
-        self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+        self.lstm = nn.LSTM(input_size, hidden_size, bidirectional=True, batch_first=True)
+        self.drop = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
         self.linear = nn.Linear(hidden_size * 2, output_size)
-    
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            x: [batch, seq_len, input_size]
-            
-        Returns:
-            [batch, seq_len, output_size]
-        """
+
+    def forward(self, x):
         self.lstm.flatten_parameters()
-        output, _ = self.lstm(x)
-        output = self.dropout(output)
-        output = self.linear(output)
-        return output
+        out, _ = self.lstm(x)
+        return self.linear(self.drop(out))
 
 
-class VGGEncoder(nn.Module):
-    """VGG-style CNN encoder for feature extraction"""
-    
-    def __init__(self, input_channels: int = 1):
-        super().__init__()
-        
-        # Kanal sayilari: 64 -> 128 -> 256 -> 256 -> 512 -> 512 -> 512
-        self.conv1 = nn.Conv2d(input_channels, 64, kernel_size=3, padding=1)
-        self.pool1 = nn.MaxPool2d(2, 2)  # H/2
-        
-        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
-        self.pool2 = nn.MaxPool2d(2, 2)  # H/4
-        
-        self.conv3_1 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
-        self.conv3_2 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
-        self.pool3 = nn.MaxPool2d((2, 1), (2, 1))  # H/8, W ayni
-        
-        self.conv4_1 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
-        self.bn4 = nn.BatchNorm2d(512)
-        self.conv4_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
-        self.bn4_2 = nn.BatchNorm2d(512)
-        self.pool4 = nn.MaxPool2d((2, 1), (2, 1))  # H/16, W ayni
-        
-        self.conv5 = nn.Conv2d(512, 512, kernel_size=2, padding=0)
-        self.bn5 = nn.BatchNorm2d(512)
-        
-        self.relu = nn.ReLU(inplace=True)
-        
-        self.output_channels = 512
-    
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            x: [batch, channels, height, width]
-            
-        Returns:
-            [batch, channels, 1, width'] - height 1'e dusurulur
-        """
-        # Conv block 1
-        x = self.relu(self.conv1(x))
-        x = self.pool1(x)
-        
-        # Conv block 2
-        x = self.relu(self.conv2(x))
-        x = self.pool2(x)
-        
-        # Conv block 3
-        x = self.relu(self.conv3_1(x))
-        x = self.relu(self.conv3_2(x))
-        x = self.pool3(x)
-        
-        # Conv block 4
-        x = self.relu(self.bn4(self.conv4_1(x)))
-        x = self.relu(self.bn4_2(self.conv4_2(x)))
-        x = self.pool4(x)
-        
-        # Conv block 5
-        x = self.relu(self.bn5(self.conv5(x)))
-        
-        return x
 
 
-class MobileNetV3Encoder(nn.Module):
+class ResNet34Encoder(nn.Module):
+    """
+    ResNet34 tabanli OCR encoder — layer4 dahil, custom stride ameliyati uygulanmis.
+
+    Neden stride ameliyati?
+      ResNet34'un layer2/3/4 ilk blogundaki stride=(2,2) hem yuksekligi hem
+      genisligi yariya indirir. OCR'da genislik = CTC zaman ekseni oldugu icin
+      her fazladan /2 isleminde time-step sayisi yariya dusuyor, bu da CTC'nin
+      tekrar eden karakterleri (OO, KK, EE) blank ile ayirma sansini yok ediyor.
+      Cozum: stride=(2,2) -> stride=(2,1) ile sadece yuksekligi boluyoruz.
+
+    Akis (H=48, W=256 girdisi icin):
+      stem  (stride=2)           : [B,  64, 24, 128]
+      maxpool (stride=2)         : [B,  64, 12,  64]
+      layer1 (stride=1)          : [B,  64, 12,  64]
+      layer2 (stride=(2,1))      : [B, 128,  6,  64]
+      layer3 (stride=(2,1))      : [B, 256,  3,  64]
+      layer4 (stride=(2,1))      : [B, 512,  2,  64]
+      AdaptiveAvgPool((1, None)) : [B, 512,  1,  64]  <- W//4, VGG ile ayni
+
+    Cikis: [B, 512, 1, W//4]
+    """
 
     def __init__(self, input_channels: int = 1, pretrained: bool = True):
         super().__init__()
 
         try:
-            from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
-            weights = MobileNet_V3_Small_Weights.IMAGENET1K_V1 if pretrained else None
-            backbone = mobilenet_v3_small(weights=weights)
+            from torchvision.models import resnet34, ResNet34_Weights
+            weights = ResNet34_Weights.IMAGENET1K_V1 if pretrained else None
+            backbone = resnet34(weights=weights)
         except (ImportError, AttributeError):
             try:
                 import torchvision.models as _tvm
-                backbone = _tvm.mobilenet_v3_small(pretrained=pretrained)
+                backbone = _tvm.resnet34(pretrained=pretrained)
             except TypeError:
                 import torchvision.models as _tvm
-                backbone = _tvm.mobilenet_v3_small()
+                backbone = _tvm.resnet34()
 
-        feat_list = list(backbone.features.children())
-
-        # Ilk konvolusyonu 1-kanal girdi icin uyarla
-        first_block = feat_list[0]   # Conv2dNormActivation
-        old_conv = first_block[0]    # Conv2d(3, 16, 3, stride=2, padding=1)
+        # conv1'i gri tonlu (1-kanalli) girdi icin uyarla
+        old_conv = backbone.conv1
         new_conv = nn.Conv2d(
-            input_channels, 16,
-            kernel_size=old_conv.kernel_size,
-            stride=old_conv.stride,
-            padding=old_conv.padding,
-            bias=(old_conv.bias is not None),
+            input_channels, 64,
+            kernel_size=7, stride=2, padding=3, bias=False,
         )
         if pretrained:
             with torch.no_grad():
                 new_conv.weight.data = old_conv.weight.data.mean(dim=1, keepdim=True)
-        first_block[0] = new_conv
 
-        # feat_list[0..3]: 3x stride-2 => H/8=4, W/8 (H=32 girdi varsayimi)
-        # [0] Conv2dNormActivation stride=(2,2) => [B, 16, 16, W/2]
-        # [1] InvertedResidual      stride=(2,2) => [B, 16,  8, W/4]
-        # [2] InvertedResidual      stride=(2,2) => [B, 24,  4, W/8]
-        # [3] InvertedResidual      stride=(1,1) => [B, 24,  4, W/8]
-        self.features = nn.Sequential(*feat_list[:4])
+        self.stem    = nn.Sequential(new_conv, backbone.bn1, backbone.relu)
+        self.maxpool = backbone.maxpool           # stride=2: H//4, W//4
 
-        # H=4 -> 1 kolaps + kanal projeksiyonu (512 = VGGEncoder ile ayni)
-        self.bridge = nn.Sequential(
-            nn.Conv2d(24, 512, kernel_size=(4, 1), stride=1, padding=0, bias=False),
-            nn.BatchNorm2d(512),
-            nn.Hardswish(inplace=True),
+        self.layer1  = backbone.layer1            # stride=1 — genislik degismez
+        self.layer2  = self._patch_stride(backbone.layer2)   # (2,1)
+        self.layer3  = self._patch_stride(backbone.layer3)   # (2,1)
+        self.layer4  = self._patch_stride(backbone.layer4)   # (2,1)
+
+        self.pool    = nn.AdaptiveAvgPool2d((1, None))        # H -> 1
+
+        self.output_channels = 512
+
+    @staticmethod
+    def _patch_stride(layer: nn.Sequential) -> nn.Sequential:
+        """
+        Bir ResNet katmanindaki ilk blogun stride=(2,2) degerini stride=(2,1) yapar.
+        Hem conv1 hem downsample shortcut guncellenir; ImageNet agirliklari korunur.
+        """
+        block = layer[0]
+
+        # conv1: stride (2,2) -> (2,1)
+        old_c = block.conv1
+        new_c = nn.Conv2d(
+            old_c.in_channels, old_c.out_channels,
+            kernel_size=old_c.kernel_size,
+            stride=(2, 1),
+            padding=old_c.padding,
+            bias=old_c.bias is not None,
         )
+        with torch.no_grad():
+            new_c.weight.data.copy_(old_c.weight.data)
+        block.conv1 = new_c
 
-        self.output_channels = 512  # VGGEncoder ile ayni -> CRNN dogrudan uyumlu
+        # downsample shortcut: stride (2,2) -> (2,1)
+        if block.downsample is not None:
+            old_ds = block.downsample[0]
+            new_ds = nn.Conv2d(
+                old_ds.in_channels, old_ds.out_channels,
+                kernel_size=old_ds.kernel_size,
+                stride=(2, 1),
+                padding=old_ds.padding,
+                bias=old_ds.bias is not None,
+            )
+            with torch.no_grad():
+                new_ds.weight.data.copy_(old_ds.weight.data)
+            block.downsample[0] = new_ds
+
+        return layer
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            x: [B, C, 32, W]  — yukseklik 32 olmali
+            x: [B, C, H, W]  — H=48 (varsayilan) veya H=32
 
         Returns:
-            [B, 512, 1, W/8]
+            [B, 512, 1, W//4]
         """
-        x = self.features(x)  # [B, 24, 4, W/8]
-        x = self.bridge(x)    # [B, 512, 1, W/8]
+        x = self.stem(x)     # [B,  64, H/2,  W/2]
+        x = self.maxpool(x)  # [B,  64, H/4,  W/4]
+        x = self.layer1(x)   # [B,  64, H/4,  W/4]
+        x = self.layer2(x)   # [B, 128, H/8,  W/4]
+        x = self.layer3(x)   # [B, 256, H/16, W/4]
+        x = self.layer4(x)   # [B, 512, H/32, W/4]
+        x = self.pool(x)     # [B, 512, 1,    W/4]
         return x
 
 
 class CRNN(nn.Module):
-    """
-    CRNN - Convolutional Recurrent Neural Network
-    
-    Metin tanima icin CNN + BiLSTM + CTC mimarisi.
-    """
-    
-    def __init__(
-        self,
-        num_classes: int,
-        input_channels: int = 1,
-        hidden_size: int = 256,
-        num_layers: int = 2,
-        dropout: float = 0.1,
-        encoder_type: str = "vgg"
-    ):
-        """
-        Args:
-            num_classes: Karakter sayisi (vocab size + blank)
-            input_channels: Giris kanal sayisi (1=grayscale, 3=RGB)
-            hidden_size: LSTM hidden size
-            num_layers: LSTM katman sayisi
-            dropout: Dropout orani
-            encoder_type: CNN encoder tipi (vgg veya resnet)
-        """
+    """ResNet34 + 2×BiLSTM + CTC. Giris: [B, 1, 48, W]. Cikis: log-probs [W//4, B, C]."""
+
+    def __init__(self, num_classes, input_channels=1, hidden_size=256, num_layers=2, dropout=0.1, **_):
         super().__init__()
-        
-        self.num_classes = num_classes
-        
-        # CNN Encoder
-        if encoder_type == "vgg":
-            self.encoder = VGGEncoder(input_channels)
-        elif encoder_type == "mobilenetv3":
-            self.encoder = MobileNetV3Encoder(input_channels)
-        else:
-            raise ValueError(f"Bilinmeyen encoder tipi: {encoder_type}")
-        
-        encoder_output = self.encoder.output_channels
-        
-        # Sequence modeling (BiLSTM)
-        self.sequence = nn.Sequential()
-        
-        for i in range(num_layers):
-            input_dim = encoder_output if i == 0 else hidden_size
-            self.sequence.add_module(
-                f'bilstm_{i}',
-                BidirectionalLSTM(
-                    input_dim,
-                    hidden_size,
-                    hidden_size,
-                    dropout if i < num_layers - 1 else 0
-                )
-            )
-        
-        # Output layer
+        self.encoder = ResNet34Encoder(input_channels)
+        enc_ch = self.encoder.output_channels
+        self.sequence = nn.Sequential(*[
+            BidirectionalLSTM(
+                enc_ch if i == 0 else hidden_size,
+                hidden_size, hidden_size,
+                dropout if i < num_layers - 1 else 0
+            ) for i in range(num_layers)
+        ])
         self.output = nn.Linear(hidden_size, num_classes)
-        
-        # Initialize
         self._init_weights()
-    
+
     def _init_weights(self):
-        """Agirliklari initialize et"""
-        def _init(m):
+        for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out')
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
+                if m.bias is not None: nn.init.zeros_(m.bias)
             elif isinstance(m, nn.BatchNorm2d):
-                nn.init.ones_(m.weight)
-                nn.init.zeros_(m.bias)
+                nn.init.ones_(m.weight); nn.init.zeros_(m.bias)
             elif isinstance(m, nn.Linear):
                 nn.init.xavier_uniform_(m.weight)
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
-        self.apply(_init)
-    
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            x: Giris gorseli [batch, channels, height, width]
-               height = 32 olmali
-               
-        Returns:
-            Log probabilities [seq_len, batch, num_classes]
-        """
-        # CNN feature extraction
-        # [batch, channels, height, width] -> [batch, 512, 1, width']
-        conv_out = self.encoder(x)
-        
-        # Reshape for RNN
-        # [batch, 512, 1, width'] -> [batch, width', 512]
-        batch, channels, height, width = conv_out.size()
-        assert height == 1, (
-            f"CRNN encoder ciktisi height=1 olmali, ancak {height} geldi. "
-            f"Giris gorselinin yuksekligi encoder'in beklentisiyle uyusmuyor. "
-            f"Input shape: {x.shape}"
-        )
-        
-        conv_out = conv_out.squeeze(2)  # [batch, channels, width]
-        conv_out = conv_out.permute(0, 2, 1)  # [batch, width, channels]
-        
-        # Sequence modeling
-        # [batch, width, channels] -> [batch, width, hidden_size]
-        rnn_out = self.sequence(conv_out)
-        
-        # Output layer
-        # [batch, width, hidden_size] -> [batch, width, num_classes]
-        output = self.output(rnn_out)
-        
-        # CTC icin: [seq_len, batch, num_classes]
-        output = output.permute(1, 0, 2)
-        
-        # Log softmax
-        output = F.log_softmax(output, dim=2)
-        
-        return output
-    
-    @torch.no_grad()
-    def predict(
-        self,
-        x: torch.Tensor
-    ) -> torch.Tensor:
-        """
-        Inference icin
-        
-        Args:
-            x: Giris gorseli [batch, channels, height, width]
-            
-        Returns:
-            Log probabilities [seq_len, batch, num_classes]
-        """
-        self.eval()
-        return self.forward(x)
-    
-    def get_sequence_length(self, input_width: int) -> int:
-        """Encoder tipine gore cikis sequence uzunlugunu hesapla.
+                if m.bias is not None: nn.init.zeros_(m.bias)
 
-        VGG:          Pool1 W/2, Pool2 W/2, Conv5 W-1  -> (W//4) - 1
-        MobileNetV3:  3x stride-2 in width             -> W//8
-        """
-        if isinstance(self.encoder, MobileNetV3Encoder):
-            return input_width // 8
-        # VGG encoder (varsayilan)
-        return (input_width // 4) - 1
+    def forward(self, x):
+        feat = self.encoder(x)
+        assert feat.size(2) == 1, f"Encoder H={feat.size(2)}, expected 1"
+        feat = feat.squeeze(2).permute(0, 2, 1)           # [B, W//4, 512]
+        out  = self.output(self.sequence(feat))           # [B, W//4, C]
+        return F.log_softmax(out.permute(1, 0, 2), dim=2) # [W//4, B, C]
+
+    def get_sequence_length(self, input_width):
+        return input_width // 4
 
 
 class CRNNLoss(nn.Module):
-    """CTC Loss wrapper"""
-    
-    def __init__(self, blank_idx: int = 0):
+    def __init__(self, blank_idx=0):
         super().__init__()
-        self.ctc_loss = nn.CTCLoss(blank=blank_idx, reduction='mean', zero_infinity=True)
-    
-    def forward(
-        self,
-        log_probs: torch.Tensor,
-        targets: torch.Tensor,
-        input_lengths: torch.Tensor,
-        target_lengths: torch.Tensor
-    ) -> torch.Tensor:
-        """
-        Args:
-            log_probs: [seq_len, batch, num_classes]
-            targets: [sum(target_lengths)] veya [batch, max_target_len]
-            input_lengths: [batch]
-            target_lengths: [batch]
-            
-        Returns:
-            CTC loss
-        """
-        return self.ctc_loss(log_probs, targets, input_lengths, target_lengths)
+        self.ctc = nn.CTCLoss(blank=blank_idx, reduction='mean', zero_infinity=True)
+
+    def forward(self, log_probs, targets, input_lengths, target_lengths):
+        return self.ctc(log_probs, targets, input_lengths, target_lengths)
 
 
-def build_crnn(
-    num_classes: int,
-    input_channels: int = 1,
-    hidden_size: int = 256,
-    num_layers: int = 2,
-    dropout: float = 0.1,
-    encoder_type: str = "vgg",
-    weights_path: Optional[str] = None
-) -> CRNN:
-    """
-    CRNN model olustur
-    
-    Args:
-        num_classes: Karakter sayisi
-        input_channels: Giris kanal sayisi
-        hidden_size: LSTM hidden size
-        num_layers: LSTM katman sayisi
-        dropout: Dropout orani
-        encoder_type: CNN encoder tipi
-        weights_path: Model agirlik dosyasi
-        
-    Returns:
-        CRNN model
-    """
-    model = CRNN(
-        num_classes=num_classes,
-        input_channels=input_channels,
-        hidden_size=hidden_size,
-        num_layers=num_layers,
-        dropout=dropout,
-        encoder_type=encoder_type
-    )
-    
+def build_crnn(num_classes, input_channels=1, hidden_size=256, num_layers=2,
+               dropout=0.1, weights_path=None, **kwargs):
+    model = CRNN(num_classes, input_channels, hidden_size, num_layers, dropout)
     if weights_path:
-        state_dict = torch.load(weights_path, map_location='cpu', weights_only=False)
-        model.load_state_dict(state_dict)
-    
+        model.load_state_dict(torch.load(weights_path, map_location='cpu', weights_only=False))
     return model

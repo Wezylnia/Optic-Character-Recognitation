@@ -22,7 +22,7 @@ import torch.nn.functional as F
 from itertools import takewhile
 from typing import Optional, Tuple
 
-from .model import VGGEncoder, BidirectionalLSTM
+from .model import ResNet34Encoder, BidirectionalLSTM
 
 
 # ---------------------------------------------------------------------------
@@ -179,9 +179,9 @@ class AttentionCRNN(nn.Module):
         num_layers: int = 2,
         attn_dim: int = 256,
         dropout: float = 0.1,
-        encoder_type: str = "vgg",
         sos_idx: int = 1,
-        eos_idx: int = 2
+        eos_idx: int = 2,
+        encoder_type: str = 'resnet34',  # gelecekte farkli encoder destegi icin
     ):
         super().__init__()
 
@@ -189,11 +189,8 @@ class AttentionCRNN(nn.Module):
         self.eos_idx = eos_idx
         self.num_classes = num_classes
 
-        # 1. CNN Encoder
-        if encoder_type == "vgg":
-            self.encoder = VGGEncoder(input_channels)
-        else:
-            raise ValueError(f"Bilinmeyen encoder tipi: {encoder_type}")
+        # CNN Encoder
+        self.encoder = ResNet34Encoder(input_channels)
 
         enc_channels = self.encoder.output_channels  # 512
 
@@ -286,8 +283,7 @@ class AttentionCRNN(nn.Module):
         return char_indices, attns
 
     def get_sequence_length(self, input_width: int) -> int:
-        """VGG encoder icin yaklasik cikis uzunlugu."""
-        return (input_width // 4) - 1
+        return input_width // 4
 
 
 # ---------------------------------------------------------------------------
@@ -357,27 +353,16 @@ def build_attention_crnn(
     num_layers: int = 2,
     attn_dim: int = 256,
     dropout: float = 0.1,
-    encoder_type: str = "vgg",
     sos_idx: int = 1,
     eos_idx: int = 2,
     weights_path: Optional[str] = None
 ) -> AttentionCRNN:
-    
     model = AttentionCRNN(
-        num_classes=num_classes,
-        input_channels=input_channels,
-        hidden_size=hidden_size,
-        num_layers=num_layers,
-        attn_dim=attn_dim,
-        dropout=dropout,
-        encoder_type=encoder_type,
-        sos_idx=sos_idx,
-        eos_idx=eos_idx
+        num_classes=num_classes, input_channels=input_channels,
+        hidden_size=hidden_size, num_layers=num_layers,
+        attn_dim=attn_dim, dropout=dropout,
+        sos_idx=sos_idx, eos_idx=eos_idx,
     )
-
     if weights_path:
-        state_dict = torch.load(weights_path, map_location='cpu', weights_only=False)
-        model.load_state_dict(state_dict)
-        print(f"Attention CRNN agirliklari yuklendi: {weights_path}")
-
+        model.load_state_dict(torch.load(weights_path, map_location='cpu', weights_only=False))
     return model

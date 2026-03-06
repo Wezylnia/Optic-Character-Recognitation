@@ -1,9 +1,4 @@
-"""
-Gelismis goruntu iyilestirme modulu
-
-Dusuk kaliteli, gurultulu, az kontrast veya golge iceren
-gorseller icin otomatik iyilestirme teknikleri.
-"""
+"""Goruntu iyilestirme modulu"""
 
 import cv2
 import numpy as np
@@ -11,16 +6,7 @@ from typing import Tuple, Optional
 
 
 class ImageEnhancer:
-    """
-    Goruntu kalitesini artiran islemler.
-
-    Uygulama sirasi:
-        1. Goruntu kalitesi olcumu
-        2. Golgeden arindirma
-        3. CLAHE kontrast iyilestirme
-        4. Keskinlestirme
-        5. Morfolojik temizleme
-    """
+    """Goruntu kalitesini artiran islemler."""
 
     def __init__(
         self,
@@ -28,23 +14,20 @@ class ImageEnhancer:
         clahe_tile_size: Tuple[int, int] = (8, 8),
         sharpen_strength: float = 0.5,
         shadow_removal: bool = True,
-        auto_mode: bool = True
+        auto_mode: bool = True,
+        mode: str = 'auto',
+        quality_threshold: float = 0.4,
+        sharpness_threshold: float = 50.0,
     ):
-        """
-        Args:
-            clahe_clip_limit: CLAHE clip limit (yukseltce daha fazla kontrast)
-            clahe_tile_size: CLAHE pencere boyutu
-            sharpen_strength: Keskinlestirme siddeti [0..1]
-            shadow_removal: Golge gidermeyi etkinlestir
-            auto_mode: Goruntu kalitesine gore otomatik islem sec
-        """
         self.clahe_clip_limit = clahe_clip_limit
         self.clahe_tile_size = clahe_tile_size
         self.sharpen_strength = sharpen_strength
         self.shadow_removal = shadow_removal
         self.auto_mode = auto_mode
+        self.mode = mode
+        self.quality_threshold = quality_threshold
+        self.sharpness_threshold = sharpness_threshold
 
-        # CLAHE nesnesi
         self._clahe = cv2.createCLAHE(
             clipLimit=clahe_clip_limit,
             tileGridSize=clahe_tile_size
@@ -54,16 +37,22 @@ class ImageEnhancer:
     # Ana metot
     # ------------------------------------------------------------------
 
+    def process(self, image: np.ndarray) -> np.ndarray:
+        """Mode'a gore otomatik iyilestirme: auto/document/handwriting/none."""
+        if self.mode == 'auto':
+            quality = self.measure_quality(image)
+            if quality['sharpness'] < self.sharpness_threshold:
+                return self.prepare_for_handwriting(image)
+            elif quality['score'] < self.quality_threshold:
+                return self.prepare_for_scan(image)
+            return self.enhance(image)
+        elif self.mode == 'document':
+            return self.prepare_for_scan(image)
+        elif self.mode == 'handwriting':
+            return self.prepare_for_handwriting(image)
+        return image  # mode == 'none'
+
     def enhance(self, image: np.ndarray) -> np.ndarray:
-        """
-        Goruntu iyilestirme pipeline'ini uygula.
-
-        Args:
-            image: BGR veya gri gorsel
-
-        Returns:
-            Iyilestirilmis BGR gorsel (giris ile ayni format)
-        """
         is_gray = len(image.shape) == 2
 
         # BGR'ye cevir
@@ -99,13 +88,6 @@ class ImageEnhancer:
     # ------------------------------------------------------------------
 
     def measure_quality(self, image: np.ndarray) -> dict:
-        """
-        Goruntu kalite metriklerini hesapla.
-
-        Returns:
-            {'sharpness': float, 'contrast': float,
-             'brightness': float, 'noise': float, 'score': float}
-        """
         if len(image.shape) == 3:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         else:
@@ -205,20 +187,6 @@ class ImageEnhancer:
     # ------------------------------------------------------------------
 
     def prepare_for_handwriting(self, image: np.ndarray) -> np.ndarray:
-        """
-        El yazisi tanima icin ozel on isleme.
-
-        - Kuvvetli golge giderme
-        - Kontrast artirma
-        - Ince/kalin cizgi normalizasyonu
-        - Gurultu bastirma
-
-        Args:
-            image: Giris gorseli (BGR veya gri)
-
-        Returns:
-            On islenmis gorsel (giris ile ayni format)
-        """
         is_gray = len(image.shape) == 2
         if is_gray:
             bgr = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -257,13 +225,6 @@ class ImageEnhancer:
     # ------------------------------------------------------------------
 
     def prepare_for_scan(self, image: np.ndarray) -> np.ndarray:
-        """
-        Taranmis belge / fotograf edilmis dokumanlar icin on isleme.
-
-        - Perspektif duzeltme ipucu hazirligi
-        - Agresif golge giderme
-        - CLAHE + keskinlestirme
-        """
         is_gray = len(image.shape) == 2
         if is_gray:
             bgr = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)

@@ -49,13 +49,7 @@ def load_model(checkpoint: str = "checkpoints/realworld_finetune/best_model.pth"
         hidden_size=256,
         num_layers=2,
         dropout=0.1,
-        encoder_type='vgg'
-    ).to(device)
-    
-    # Checkpoint yukle
-    checkpoint_path = Path(checkpoint)
-    if checkpoint_path.exists():
-        print(f"Checkpoint yukleniyor: {checkpoint_path}")
+
         checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
         model.load_state_dict(checkpoint['model_state_dict'])
         print(f"Epoch {checkpoint['epoch']} yuklendi")

@@ -44,12 +44,6 @@ class SpellChecker:
         dictionary: Optional[Set[str]] = None,
         max_edit_distance: int = 2
     ):
-        """
-        Args:
-            language: Dil (tr, en veya both)
-            dictionary: Ozel sozluk (set)
-            max_edit_distance: Maksimum edit mesafesi
-        """
         self.language = language
         self.max_edit_distance = max_edit_distance
         
@@ -215,11 +209,6 @@ class ConfidenceBasedCorrector:
         spell_checker: SpellChecker,
         confidence_threshold: float = 0.8
     ):
-        """
-        Args:
-            spell_checker: SpellChecker nesnesi
-            confidence_threshold: Duzeltme esik degeri
-        """
         self.spell_checker = spell_checker
         self.confidence_threshold = confidence_threshold
     
@@ -228,16 +217,6 @@ class ConfidenceBasedCorrector:
         text: str,
         char_confidences: Optional[List[float]] = None
     ) -> str:
-        """
-        Guven skorlarina gore duzelt
-        
-        Args:
-            text: Metin
-            char_confidences: Her karakter icin guven skoru
-            
-        Returns:
-            Duzeltilmis metin
-        """
         if char_confidences is None:
             return self.spell_checker.correct(text)
         

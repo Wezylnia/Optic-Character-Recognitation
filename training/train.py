@@ -132,7 +132,7 @@ def main():
 
     # Dataset boyutları ───────────────────────────────────────────────
     rec_cfg = config.get("recognition", {}).get("model", {})
-    image_h  = rec_cfg.get("input_height", 32)
+    image_h  = rec_cfg.get("input_height", 48)
     image_w  = rec_cfg.get("input_width",  256)
 
     def make_dataset(json_path, with_aug=False):

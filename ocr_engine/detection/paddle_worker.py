@@ -1,13 +1,12 @@
 """
-PaddleOCR detection subprocess worker.
+PaddleOCR detection subprocess worker + PaddleDetector client.
 
-Bu script ayri bir Python process'te calisir — PyTorch ile ayni
-process'te olmadigi icin CUDA DLL catismasi (_gpuDeviceProperties
-already registered) yasanmaz.
+Worker ayri bir Python process'te calisir — PyTorch ile ayni process'te
+olmadigi icin CUDA DLL catismasi yasanmaz.
 
 Protokol (stdin/stdout):
   Istek : 4 bayt uzunluk (big-endian uint32) + numpy array bytes (pickle)
-  Cevap : JSON satiri  [[x1,y1],[x2,y2],[x3,y3],[x4,y4]] listesi + '\n'
+  Cevap : JSON satiri  [[x1,y1],[x2,y2],[x3,y3],[x4,y4]] listesi + '\\n'
   Kapat : 4 bayt 0x00000000
 """
 import os
@@ -15,11 +14,53 @@ import sys
 import json
 import pickle
 import struct
+import subprocess
 import traceback
-
-os.environ.setdefault('PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK', 'True')
+from pathlib import Path
+from typing import List
 
 import numpy as np
+
+
+class PaddleDetector:
+    """Subprocess bazli PaddleOCR metin tespiti. PyTorch ile CUDA catismasini onler."""
+
+    def __init__(self):
+        worker = str(Path(__file__).resolve())
+        self._proc = subprocess.Popen(
+            [sys.executable, worker],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        )
+        ready = self._proc.stdout.readline().decode().strip()
+        if ready != 'READY':
+            raise RuntimeError(f"PaddleDetector baslatma hatasi: {ready!r}")
+
+    def detect(self, image: np.ndarray) -> List[np.ndarray]:
+        data = pickle.dumps(image)
+        header = struct.pack('>I', len(data))
+        self._proc.stdin.write(header + data)
+        self._proc.stdin.flush()
+        line = self._proc.stdout.readline()
+        raw = json.loads(line)
+        return [np.array(pts, dtype=np.float32) for pts in raw]
+
+    def close(self):
+        try:
+            self._proc.stdin.write(struct.pack('>I', 0))
+            self._proc.stdin.flush()
+        except Exception:
+            pass
+        self._proc.terminate()
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass
+
+os.environ.setdefault('PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK', 'True')
 
 
 def load_detector():
