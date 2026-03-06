@@ -1,13 +1,20 @@
 """
-Training modulu - Model egitim scriptleri ve veri setleri
+Training modülü - Temiz ve kütüphane tabanlı uygulama.
 
 Modüller:
-  synthetic                -> SyntheticTextGenerator
-  recognition_dataset      -> RecognitionDataset, collate_recognition
-  detection_dataset        -> DetectionDataset, SynthTextDataset, ICDARDataset
-  augmentation_detection   -> Augmentor, DetectionAugmentor
-  augmentation_recognition -> RecognitionAugmentor
-  train_detection          -> DetectionTrainer, DetectionMetrics
-  train_recognition        -> RecognitionTrainer
-  train_attention          -> AttentionTrainer
-  train_recognition_mjsynth -> MJSynth advanced trainer (AMP + OneCycleLR)"""
+  synthetic  -> SyntheticTextGenerator
+  augment    -> RecognitionAugmentor, DetectionAugmentor  (albumentations)
+  dataset    -> RecognitionDataset, DetectionDataset,
+                collate_recognition, collate_attention
+  trainer    -> RecognitionTrainer
+  train      -> CLI giriş noktası  (python training/train.py --help)
+"""
+
+from .augment import DetectionAugmentor, RecognitionAugmentor
+from .dataset import (
+    DetectionDataset,
+    RecognitionDataset,
+    collate_attention,
+    collate_recognition,
+)
+from .trainer import RecognitionTrainer

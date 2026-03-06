@@ -54,7 +54,7 @@ if args.reset_best_acc:
 
 cmd = [
     sys.executable,
-    str(ROOT / 'training' / 'train_recognition_mjsynth.py'),
+    str(ROOT / 'training' / 'train.py'),
     '--train_json',  str(ROOT / args.train_json),
     '--val_json',    str(ROOT / args.val_json),
     '--resume',      str(args.resume),
