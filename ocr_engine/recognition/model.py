@@ -108,15 +108,6 @@ class VGGEncoder(nn.Module):
 
 
 class MobileNetV3Encoder(nn.Module):
-    """
-    MobileNetV3-small tabanli encoder — VGGEncoder drop-in yedegi.
-
-    VGG'ye kiyasla ~%%15 daha hizli, benzer dogruluk.
-    Ilk 4 MobileNet blogu kullanilir (3x stride-2 => H/8, W/8),
-    ardindan Conv(H=4, W=1) ile height kolapse edilir.
-
-    Gereksinim: torchvision
-    """
 
     def __init__(self, input_channels: int = 1, pretrained: bool = True):
         super().__init__()

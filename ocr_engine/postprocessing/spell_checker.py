@@ -5,12 +5,13 @@ Yazim duzeltme modulu
 from typing import List, Dict, Optional, Set, Tuple
 import re
 from collections import Counter
+from functools import reduce
 
 
 class SpellChecker:
     """Basit yazim duzeltme sinifi"""
     
-    # Turkce karakter eslestirmeleri (OCR hatalari icin)
+    # Yaygın OCR karakter karisikliklari
     TURKISH_CHAR_MAP = {
         'i': ['ı', 'l', '1', '|'],
         'ı': ['i', 'l', '1', '|'],
@@ -25,7 +26,18 @@ class SpellChecker:
         'g': ['ğ', '9'],
         'ğ': ['g', '9'],
     }
-    
+
+    # Önceden derlenmiş OCR hata desenleri
+    _OCR_FIXES = [
+        (re.compile(r'\bl\b'),          'I'),
+        (re.compile(r'0(?=[a-zA-Z])'),   'O'),
+        (re.compile(r'(?<=[a-zA-Z])0'), 'O'),
+        (re.compile(r'1(?=[a-zA-Z])'),  'l'),
+        (re.compile(r'\brn\b'),         'm'),
+        (re.compile(r'vv'),             'w'),
+        (re.compile(r'cl'),             'd'),
+    ]
+
     def __init__(
         self,
         language: str = "tr",
@@ -117,97 +129,39 @@ class SpellChecker:
             self.dictionary.add(word.lower())
     
     def check(self, text: str) -> List[Tuple[str, bool]]:
-        """
-        Metindeki kelimeleri kontrol et
-        
-        Args:
-            text: Kontrol edilecek metin
-            
-        Returns:
-            [(kelime, dogru_mu), ...] listesi
-        """
-        words = self._tokenize(text)
-        results = []
-        
-        for word in words:
-            is_correct = self._is_correct(word)
-            results.append((word, is_correct))
-        
-        return results
+        """Metindeki kelimeleri kontrol et. [(kelime, dogru_mu), ...] dondurur."""
+        return [(word, self._is_correct(word)) for word in self._tokenize(text)]
     
     def correct(self, text: str) -> str:
-        """
-        Metindeki yazim hatalarini duzelt
-        
-        Args:
-            text: Duzeltilecek metin
-            
-        Returns:
-            Duzeltilmis metin
-        """
-        words = self._tokenize(text)
-        corrected_words = []
-        
-        for word in words:
-            if self._is_correct(word):
-                corrected_words.append(word)
-            else:
-                suggestion = self.suggest(word)
-                corrected_words.append(suggestion if suggestion else word)
-        
-        return ' '.join(corrected_words)
+        """Metindeki yazim hatalarini duzelt."""
+        return ' '.join(
+            word if self._is_correct(word) else (self.suggest(word) or word)
+            for word in self._tokenize(text)
+        )
     
     def suggest(self, word: str) -> Optional[str]:
-        """
-        Kelime icin oneri getir
-        
-        Args:
-            word: Yanlis kelime
-            
-        Returns:
-            Onerilen duzeltme veya None
-        """
+        """Kelime icin en yakin sozluk onerisi dondur, bulunamazsa None."""
         word_lower = word.lower()
-
-        # symspellpy ile hizli arama
         if self._symspell is not None:
             try:
-                suggestions = self._symspell.lookup(
-                    word_lower,
-                    verbosity=0,
+                sug = self._symspell.lookup(
+                    word_lower, verbosity=0,
                     max_edit_distance=self.max_edit_distance
                 )
-                if suggestions:
-                    return self._preserve_case(word, suggestions[0].term)
+                if sug:
+                    return self._preserve_case(word, sug[0].term)
             except Exception:
                 pass
-
-        # Zaten dogru mu?
         if word_lower in self.dictionary:
             return word
-        
-        # Edit mesafesi 1 olanlar
         candidates = self._edits1(word_lower)
-        valid = [w for w in candidates if w in self.dictionary]
-        
-        if valid:
-            # En yuksek frekansli veya ilk eslesme
-            if self.word_frequencies:
-                valid.sort(key=lambda w: self.word_frequencies.get(w, 0), reverse=True)
-            return self._preserve_case(word, valid[0])
-        
-        # Edit mesafesi 2 olanlar
-        if self.max_edit_distance >= 2:
-            candidates2 = set()
-            for c in candidates:
-                candidates2.update(self._edits1(c))
-            valid = [w for w in candidates2 if w in self.dictionary]
-            
+        for _ in range(self.max_edit_distance):
+            valid = [w for w in candidates if w in self.dictionary]
             if valid:
                 if self.word_frequencies:
                     valid.sort(key=lambda w: self.word_frequencies.get(w, 0), reverse=True)
                 return self._preserve_case(word, valid[0])
-        
+            candidates = {e for c in candidates for e in self._edits1(c)}
         return None
     
     def _tokenize(self, text: str) -> List[str]:
@@ -218,21 +172,7 @@ class SpellChecker:
     
     def _is_correct(self, word: str) -> bool:
         """Kelime dogru mu?"""
-        word_lower = word.lower()
-        
-        # Sozlukte var mi?
-        if word_lower in self.dictionary:
-            return True
-        
-        # Sayi mi?
-        if word.isdigit():
-            return True
-        
-        # Tek karakter mi?
-        if len(word) <= 1:
-            return True
-        
-        return False
+        return word.lower() in self.dictionary or word.isdigit() or len(word) <= 1
     
     def _edits1(self, word: str) -> Set[str]:
         """Edit mesafesi 1 olan tum kelimeler"""
@@ -263,31 +203,8 @@ class SpellChecker:
         return corrected
     
     def correct_ocr_errors(self, text: str) -> str:
-        """
-        OCR'a ozgu hatalari duzelt
-        
-        Args:
-            text: OCR cikisi
-            
-        Returns:
-            Duzeltilmis metin
-        """
-        # Yaygın OCR hatalari
-        replacements = [
-            (r'\bl\b', 'I'),        # Tek 'l' -> 'I'
-            (r'0(?=[a-zA-Z])', 'O'),  # Harf oncesi 0 -> O
-            (r'(?<=[a-zA-Z])0', 'O'),  # Harf sonrasi 0 -> O
-            (r'1(?=[a-zA-Z])', 'l'),  # Harf oncesi 1 -> l
-            (r'\brn\b', 'm'),        # rn -> m
-            (r'vv', 'w'),            # vv -> w
-            (r'cl', 'd'),            # cl -> d
-        ]
-        
-        result = text
-        for pattern, replacement in replacements:
-            result = re.sub(pattern, replacement, result)
-        
-        return result
+        """OCR'a ozgu yaygin karakter hatalarini duzelt."""
+        return reduce(lambda s, pr: pr[0].sub(pr[1], s), self._OCR_FIXES, text)
 
 
 class ConfidenceBasedCorrector:

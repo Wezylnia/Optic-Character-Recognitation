@@ -10,18 +10,6 @@ from .vocab import Vocabulary
 
 
 class UnigramLM:
-    """
-    Kelime duzeyinde tek-gram dil modeli.
-
-    CTC prefix beam search sonuclarini kelime frekansina gore
-    yeniden puanlar: final = ctc_score + lm_weight * sum(log P(word)).
-
-    Kullanim::
-        lm = UnigramLM.from_file('data/tr_frequency_dict.txt')
-        decoder = CTCPrefixDecoder(vocab, beam_width=10)
-        decoder.set_lm(lm, lm_weight=0.3)
-    """
-
     def __init__(
         self,
         word_log_probs: Optional[Dict[str, float]] = None,
@@ -74,16 +62,6 @@ class CTCDecoder:
         log_probs: torch.Tensor,
         lengths: Optional[torch.Tensor] = None
     ) -> List[str]:
-        """
-        Greedy decoding - en yuksek olasilikli yolu sec
-        
-        Args:
-            log_probs: [seq_len, batch, num_classes]
-            lengths: [batch] - her ornek icin sequence uzunlugu
-            
-        Returns:
-            Decode edilmis metin listesi
-        """
         # Argmax
         _, max_indices = log_probs.max(dim=2)  # [seq_len, batch]
         max_indices = max_indices.permute(1, 0)  # [batch, seq_len]

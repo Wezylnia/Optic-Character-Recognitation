@@ -19,6 +19,7 @@ Kullanim:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from itertools import takewhile
 from typing import Optional, Tuple
 
 from .model import VGGEncoder, BidirectionalLSTM
@@ -29,18 +30,6 @@ from .model import VGGEncoder, BidirectionalLSTM
 # ---------------------------------------------------------------------------
 
 class BahdanauAttention(nn.Module):
-    """
-    Bahdanau (additive) attention.
-
-    Kaynak: "Neural Machine Translation by Jointly Learning to Align and Translate"
-    (Bahdanau et al., 2015)
-
-    h_enc : encoder gizli durumu  [batch, T, enc_dim]
-    h_dec : decoder gizli durumu  [batch, dec_dim]
-    cikis : context vektor         [batch, enc_dim]
-            attention agirliklari  [batch, T]
-    """
-
     def __init__(self, enc_dim: int, dec_dim: int, attn_dim: int = 256):
         super().__init__()
         self.W_enc = nn.Linear(enc_dim, attn_dim, bias=False)
@@ -53,16 +42,6 @@ class BahdanauAttention(nn.Module):
         dec_hidden: torch.Tensor,
         mask: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Args:
-            enc_out:    [batch, T, enc_dim]
-            dec_hidden: [batch, dec_dim]
-            mask:       [batch, T] — maskeli zaman adimlarini sifirla (bool)
-
-        Returns:
-            context:   [batch, enc_dim]
-            attn_w:    [batch, T]
-        """
         # enc_out  : [batch, T, attn_dim]
         proj_enc = self.W_enc(enc_out)
 
@@ -89,15 +68,6 @@ class BahdanauAttention(nn.Module):
 # ---------------------------------------------------------------------------
 
 class AttentionDecoder(nn.Module):
-    """
-    Karakter seviyesinde attention decoder.
-
-    Her adimda:
-        1. Onceki karakter gomme (embedding)
-        2. Attention hesaplama
-        3. GRU guncelleme
-        4. Cikis projeksiyonu
-    """
 
     def __init__(
         self,
@@ -136,20 +106,6 @@ class AttentionDecoder(nn.Module):
         enc_out: torch.Tensor,
         mask: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """
-        Tek adim.
-
-        Args:
-            prev_char: [batch]            — onceki karakter indisi
-            hidden:    [1, batch, dec_dim] — GRU gizli durum
-            enc_out:   [batch, T, enc_dim]
-            mask:      [batch, T]
-
-        Returns:
-            logit:    [batch, num_classes]
-            hidden:   [1, batch, dec_dim]
-            attn_w:   [batch, T]
-        """
         # [batch] -> [batch, 64]
         emb = self.embedding(prev_char)
 
@@ -176,20 +132,6 @@ class AttentionDecoder(nn.Module):
         sos_idx: int = 1,
         eos_idx: int = 2
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Args:
-            enc_out:     [batch, T, enc_dim]
-            targets:     [batch, max_target_len] (egitim, opsiyonel)
-            target_lengths: [batch]
-            max_len:     maksimum cikti uzunlugu (inference)
-            teacher_forcing_ratio: ogretmen zorlama orani
-            sos_idx:     baslangic token indisi
-            eos_idx:     bitis token indisi
-
-        Returns:
-            all_logits:  [batch, seq_len, num_classes]
-            all_attns:   [batch, seq_len, T]
-        """
         batch = enc_out.size(0)
         device = enc_out.device
 
@@ -229,16 +171,6 @@ class AttentionDecoder(nn.Module):
 # ---------------------------------------------------------------------------
 
 class AttentionCRNN(nn.Module):
-    """
-    Attention mekanizmali CRNN modeli.
-
-    Mimari:
-        CNN (VGG/ResNet) -> BiLSTM -> Attention Decoder
-
-    Egitimde: cross-entropy loss + teacher forcing
-    Inference: greedy veya beam search
-    """
-
     def __init__(
         self,
         num_classes: int,
@@ -251,18 +183,6 @@ class AttentionCRNN(nn.Module):
         sos_idx: int = 1,
         eos_idx: int = 2
     ):
-        """
-        Args:
-            num_classes:    Vocab boyutu (blank + unk + karakterler)
-            input_channels: 1=gri, 3=BGR
-            hidden_size:    BiLSTM gizli durum boyutu
-            num_layers:     BiLSTM katman sayisi
-            attn_dim:       Attention projeksiyon boyutu
-            dropout:        Dropout orani
-            encoder_type:   "vgg" veya "resnet"
-            sos_idx:        Baslangic token indisi
-            eos_idx:        Bitis token indisi
-        """
         super().__init__()
 
         self.sos_idx = sos_idx
@@ -333,17 +253,6 @@ class AttentionCRNN(nn.Module):
         target_lengths: Optional[torch.Tensor] = None,
         teacher_forcing_ratio: float = 0.5
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Args:
-            x:               [B, C, H, W]
-            targets:         [B, T] — egitim icin
-            target_lengths:  [B]    — egitim icin
-            teacher_forcing_ratio: ogretmen zorlama orani
-
-        Returns:
-            logits:    [B, seq_len, num_classes]
-            attn_maps: [B, seq_len, T_enc]
-        """
         enc_out = self._encode(x)   # [B, T_enc, hidden]
 
         logits, attns = self.decoder(
@@ -363,13 +272,6 @@ class AttentionCRNN(nn.Module):
         x: torch.Tensor,
         max_len: int = 100
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Greedy inference.
-
-        Returns:
-            char_indices: [B, seq_len]
-            attn_maps:    [B, seq_len, T_enc]
-        """
         self.eval()
         enc_out = self._encode(x)
         logits, attns = self.decoder(
@@ -409,15 +311,6 @@ class AttentionLoss(nn.Module):
         targets: torch.Tensor,
         target_lengths: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Args:
-            logits:  [B, seq_len, num_classes]
-            targets: [B, max_target_len]
-            target_lengths: [B]
-
-        Returns:
-            Skalar loss
-        """
         B, seq_len, C = logits.size()
         tgt_len = targets.size(1)
         min_len = min(seq_len, tgt_len)
@@ -442,36 +335,14 @@ class AttentionDecodeHelper:
         self.eos_idx = eos_idx
 
     def indices_to_text(self, indices: torch.Tensor) -> str:
-        """
-        [seq_len] tensorunu metne cevir.
-
-        Args:
-            indices: Tek ornek icin karakter indis tensoru
-
-        Returns:
-            Metin string
-        """
-        chars = []
-        for idx in indices.tolist():
-            if idx == self.eos_idx:
-                break
-            if idx in (self.sos_idx, self.vocab.blank_idx, self.vocab.unk_idx):
-                continue
-            ch = self.vocab.idx_to_char.get(idx, '')
-            if ch:
-                chars.append(ch)
-        return ''.join(chars)
+        """[seq_len] tensorunu metne cevir — EOS'ta dur."""
+        skip = {self.sos_idx, self.vocab.blank_idx, self.vocab.unk_idx}
+        return ''.join(
+            ch for idx in takewhile(lambda i: i != self.eos_idx, indices.tolist())
+            if idx not in skip and (ch := self.vocab.idx_to_char.get(idx, ''))
+        )
 
     def batch_indices_to_texts(self, batch_indices: torch.Tensor) -> list:
-        """
-        [B, seq_len] tensorunu metin listesine cevir.
-
-        Args:
-            batch_indices: [B, seq_len]
-
-        Returns:
-            Liste[str]
-        """
         return [self.indices_to_text(row) for row in batch_indices]
 
 
@@ -491,24 +362,7 @@ def build_attention_crnn(
     eos_idx: int = 2,
     weights_path: Optional[str] = None
 ) -> AttentionCRNN:
-    """
-    AttentionCRNN modeli olustur.
-
-    Args:
-        num_classes:    Vocab boyutu
-        input_channels: 1=gri, 3=renk
-        hidden_size:    BiLSTM gizli boyut
-        num_layers:     BiLSTM katman sayisi
-        attn_dim:       Attention projeksiyon boyutu
-        dropout:        Dropout orani
-        encoder_type:   "vgg" veya "resnet"
-        sos_idx:        Baslangic token
-        eos_idx:        Bitis token
-        weights_path:   Onceden egitilmis agirlik dosyasi
-
-    Returns:
-        AttentionCRNN modeli
-    """
+    
     model = AttentionCRNN(
         num_classes=num_classes,
         input_channels=input_channels,

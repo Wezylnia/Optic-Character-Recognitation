@@ -203,10 +203,7 @@ class Deskewer:
         matrix[1, 2] += (new_h - h) / 2
         
         # Border degeri
-        if len(image.shape) == 3:
-            border = (border_value, border_value, border_value)
-        else:
-            border = border_value
+        border = (border_value,) * 3 if image.ndim == 3 else border_value
         
         # Dondur
         rotated = cv2.warpAffine(

@@ -67,35 +67,13 @@ class ImageProcessor:
         max_width: Optional[int] = None,
         max_height: Optional[int] = None
     ) -> Tuple[np.ndarray, float]:
-        """
-        En-boy oranini koruyarak boyutlandirir
-        
-        Args:
-            image: Giris gorseli
-            max_width: Maksimum genislik
-            max_height: Maksimum yukseklik
-            
-        Returns:
-            Boyutlandirilmis gorsel ve olcekleme faktoru
-        """
-        if max_width is None:
-            max_width = self.target_size[0]
-        if max_height is None:
-            max_height = self.target_size[1]
-        
+        """En-boy oranini koruyarak boyutlandirir."""
+        max_width  = max_width  or self.target_size[0]
+        max_height = max_height or self.target_size[1]
         h, w = image.shape[:2]
-        
-        # Olcekleme faktorunu hesapla
-        scale_w = max_width / w if w > max_width else 1.0
-        scale_h = max_height / h if h > max_height else 1.0
-        scale = min(scale_w, scale_h)
-        
+        scale = min(max_width / w, max_height / h, 1.0)
         if scale < 1.0:
-            new_w = int(w * scale)
-            new_h = int(h * scale)
-            resized = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
-            return resized, scale
-        
+            return cv2.resize(image, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA), scale
         return image.copy(), 1.0
     
     def resize_to_height(
@@ -126,33 +104,13 @@ class ImageProcessor:
         target_width: int,
         pad_value: int = 0
     ) -> np.ndarray:
-        """
-        Gorseli belirli bir genislige padding ekleyerek genisletir
-        
-        Args:
-            image: Giris gorseli
-            target_width: Hedef genislik
-            pad_value: Padding degeri
-            
-        Returns:
-            Padding eklenmis gorsel
-        """
+        """Gorseli belirli bir genislige padding ekleyerek genisletir."""
         h, w = image.shape[:2]
-        
         if w >= target_width:
             return image[:, :target_width]
-        
-        pad_width = target_width - w
-        
-        if len(image.shape) == 2:
-            padded = np.full((h, target_width), pad_value, dtype=image.dtype)
-            padded[:, :w] = image
-        else:
-            c = image.shape[2]
-            padded = np.full((h, target_width, c), pad_value, dtype=image.dtype)
-            padded[:, :w, :] = image
-        
-        return padded
+        pad_w = target_width - w
+        pad_spec = ((0, 0), (0, pad_w)) if image.ndim == 2 else ((0, 0), (0, pad_w), (0, 0))
+        return np.pad(image, pad_spec, constant_values=pad_value)
     
     def normalize(self, image: np.ndarray) -> np.ndarray:
         """
