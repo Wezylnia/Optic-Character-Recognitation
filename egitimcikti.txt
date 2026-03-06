@@ -1,0 +1,1462 @@
+
+============================================================
+  REAL-WORLD FINE-TUNE EGITIMI
+============================================================
+  [OK] Resume : checkpoint_epoch_14.pth  (epoch=14, best_acc=89.22%)
+  [OK] Train  : data/real_world_train.json
+  [OK] Val    : data/real_world_test.json
+  [OK] Kayit  : checkpoints/realworld_finetune
+  [OK] Epochs : 15 → 64  (50 epoch)
+  [OK] LR     : 5e-05
+  [OK] Augment: Aktif
+
+============================================================
+  EGITIM BASLIYOR
+============================================================
+[CPU] Affinity: 0-13 aktif (P-core 0-7 + E-core 8-13) | 14,15 serbest
+[CUDA] Optimizasyonlar aktif: cudnn.benchmark=True, tf32=True
+
+======================================================================
+   OCR RECOGNITION MODEL - GELISMIS EGITIM
+   2026-03-05 21:40:36
+======================================================================
+
+[VOCABULARY] Boyut: 127 karakter
+[AUGMENTATION] Aktif
+
+[DATASET] Yukleniyor: C:\Ocr\data\real_world_train.json
+[DATASET] Val JSON: C:\Ocr\data\real_world_test.json
+[SPLIT] Train: 9,191 | Val: 5,285
+[DATALOADER] num_workers: 4, prefetch_factor: 4, drop_last: True
+
+[MODEL INFO]
+  Toplam parametre: 8,476,799
+  Egitilir parametre: 8,476,799
+  Device: cuda
+  GPU: NVIDIA GeForce RTX 3050 6GB Laptop GPU
+  GPU Memory: 6.4 GB
+  Mixed Precision (AMP): Aktif
+[CHECKPOINT] Yuklendi: epoch 14, best_acc 89.22%
+[CHECKPOINT] Egitim epoch 15'den devam edecek
+[LR OVERRIDE] 1.00e-05 -> 5.00e-05  (plateau state sifirlandi)
+[LR] ReduceLROnPlateau aktif (val_loss izleniyor, patience=3)
+
+======================================================================
+EGITIM BASLIYOR
+======================================================================
+  Train ornekleri: 9,191
+  Val ornekleri: 5,285
+  Batch boyutu: 64
+  Epoch sayisi: 64
+  Batch/epoch: 143
+  Baslangic LR: 5.00e-05
+======================================================================
+
+  Epoch 15 [  0.0%] loss=3.6805 (avg=3.6805) word=39.1% char=49.5% lr=5.00e-05 spd=... step=134011 ETA=(isiniyor...)
+  Epoch 15 [ 69.9%] loss=2.3033 (avg=2.3170) word=39.1% char=51.9% lr=5.00e-05 spd=272 img/s step=134111 ETA=0:00:09
+
+======================================================================
+EPOCH 15/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 2.0174 | Word Acc: 39.06% | Char Acc: 51.92%
+  [SURE]  0:00:47
+
+  [ORNEKLER - Train]
+    [OK] 'FREE' -> 'FREE'
+    [X] 'RUSELL' -> 'RUSSELL'
+    [X] 'TAPE' -> 'SYDNEY'
+
+  [VAL]   Loss: 0.8436 | Word Acc: 63.18% | Char Acc: 75.84%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_15.pth
+
+  [ETA]   Tahmini kalan sure: 0:04:04
+======================================================================
+
+  Epoch 16 [  0.0%] loss=1.1121 (avg=1.1121) word=59.4% char=70.4% lr=5.00e-05 spd=... step=134154 ETA=(isiniyor...)
+  Epoch 16 [ 69.9%] loss=1.1932 (avg=1.1923) word=54.2% char=67.0% lr=5.00e-05 spd=265 img/s step=134254 ETA=0:00:10
+
+======================================================================
+EPOCH 16/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 1.1855 | Word Acc: 54.17% | Char Acc: 66.97%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [X] 'CATHAY' -> 'SOI'
+    [X] 'TOWN' -> 'FOR'
+    [OK] 'COM' -> 'COM'
+
+  [VAL]   Loss: 0.7328 | Word Acc: 68.82% | Char Acc: 78.62%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_16.pth
+
+  [ETA]   Tahmini kalan sure: 0:06:03
+======================================================================
+
+  Epoch 17 [  0.0%] loss=1.4340 (avg=1.4340) word=54.7% char=65.1% lr=5.00e-05 spd=... step=134297 ETA=(isiniyor...)
+  Epoch 17 [ 69.9%] loss=1.0932 (avg=1.0965) word=54.2% char=65.6% lr=5.00e-05 spd=267 img/s step=134397 ETA=0:00:10
+
+======================================================================
+EPOCH 17/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 1.0958 | Word Acc: 54.17% | Char Acc: 65.55%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [OK] 'BRETAGNE' -> 'BRETAGNE'
+    [OK] 'U' -> 'U'
+    [OK] 'IS' -> 'IS'
+
+  [VAL]   Loss: 0.6903 | Word Acc: 71.32% | Char Acc: 79.89%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_17.pth
+
+  [ETA]   Tahmini kalan sure: 0:07:43
+======================================================================
+
+  Epoch 18 [  0.0%] loss=1.0717 (avg=1.0717) word=75.0% char=81.6% lr=5.00e-05 spd=... step=134440 ETA=(isiniyor...)
+  Epoch 18 [ 69.9%] loss=1.0512 (avg=1.0514) word=69.3% char=76.0% lr=5.00e-05 spd=260 img/s step=134540 ETA=0:00:10
+
+======================================================================
+EPOCH 18/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 1.0514 | Word Acc: 69.27% | Char Acc: 75.98%
+  [SURE]  0:00:35
+
+  [ORNEKLER - Train]
+    [X] 'MAC' -> 'MAS'
+    [OK] 'TER' -> 'TER'
+    [X] 'HERBS' -> 'HERDS'
+
+  [VAL]   Loss: 0.6646 | Word Acc: 72.45% | Char Acc: 80.93%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_18.pth
+
+  [ETA]   Tahmini kalan sure: 0:09:08
+======================================================================
+
+  Epoch 19 [  0.0%] loss=1.2630 (avg=1.2630) word=59.4% char=68.9% lr=5.00e-05 spd=... step=134583 ETA=(isiniyor...)
+  Epoch 19 [ 69.9%] loss=1.0206 (avg=1.0230) word=54.2% char=65.0% lr=5.00e-05 spd=262 img/s step=134683 ETA=0:00:10
+
+======================================================================
+EPOCH 19/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 1.0250 | Word Acc: 54.17% | Char Acc: 65.01%
+  [SURE]  0:00:35
+
+  [ORNEKLER - Train]
+    [X] 'ARCHER' -> 'A'
+    [OK] 'CALA' -> 'CALA'
+    [OK] 'BEECH' -> 'BEECH'
+
+  [VAL]   Loss: 0.6514 | Word Acc: 73.32% | Char Acc: 81.23%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_19.pth
+
+  [ETA]   Tahmini kalan sure: 0:10:19
+======================================================================
+
+  Epoch 20 [  0.0%] loss=1.1239 (avg=1.1239) word=57.8% char=70.7% lr=5.00e-05 spd=... step=134726 ETA=(isiniyor...)
+  Epoch 20 [ 69.9%] loss=0.9924 (avg=0.9937) word=61.5% char=70.7% lr=5.00e-05 spd=267 img/s step=134826 ETA=0:00:10
+
+======================================================================
+EPOCH 20/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 1.0118 | Word Acc: 61.46% | Char Acc: 70.74%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [OK] 'IPAD' -> 'IPAD'
+    [OK] 'SIXTHSEAL' -> 'SIXTHSEAL'
+    [OK] 'ROMAN' -> 'ROMAN'
+
+  [VAL]   Loss: 0.6389 | Word Acc: 74.04% | Char Acc: 81.69%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_20.pth
+
+  [ETA]   Tahmini kalan sure: 0:11:18
+======================================================================
+
+  Epoch 21 [  0.0%] loss=0.9652 (avg=0.9652) word=68.8% char=76.7% lr=5.00e-05 spd=... step=134869 ETA=(isiniyor...)
+  Epoch 21 [ 69.9%] loss=0.9770 (avg=0.9769) word=62.5% char=71.7% lr=5.00e-05 spd=268 img/s step=134969 ETA=0:00:10
+
+======================================================================
+EPOCH 21/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.9802 | Word Acc: 62.50% | Char Acc: 71.72%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [X] 'TEA' -> 'TE'
+    [X] 'CITY' -> 'CY'
+    [X] 'POH' -> 'HALE'
+
+  [VAL]   Loss: 0.6270 | Word Acc: 74.85% | Char Acc: 82.17%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_21.pth
+
+  [ETA]   Tahmini kalan sure: 0:12:06
+======================================================================
+
+  Epoch 22 [  0.0%] loss=1.2289 (avg=1.2289) word=67.2% char=70.5% lr=5.00e-05 spd=... step=135012 ETA=(isiniyor...)
+  Epoch 22 [ 69.9%] loss=0.9844 (avg=0.9868) word=65.1% char=71.1% lr=5.00e-05 spd=271 img/s step=135112 ETA=0:00:09
+
+======================================================================
+EPOCH 22/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.9706 | Word Acc: 65.10% | Char Acc: 71.11%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [OK] 'FUNNY' -> 'FUNNY'
+    [OK] 'DRIVERS' -> 'DRIVERS'
+    [X] 'SALE' -> 'EXIT'
+
+  [VAL]   Loss: 0.6173 | Word Acc: 75.23% | Char Acc: 82.27%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_22.pth
+
+  [ETA]   Tahmini kalan sure: 0:12:45
+======================================================================
+
+  Epoch 23 [  0.0%] loss=0.8270 (avg=0.8270) word=68.8% char=70.0% lr=5.00e-05 spd=... step=135155 ETA=(isiniyor...)
+  Epoch 23 [ 69.9%] loss=0.9574 (avg=0.9561) word=66.7% char=71.1% lr=5.00e-05 spd=274 img/s step=135255 ETA=0:00:09
+
+======================================================================
+EPOCH 23/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.9545 | Word Acc: 66.67% | Char Acc: 71.14%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [OK] 'TURN' -> 'TURN'
+    [OK] 'COM' -> 'COM'
+    [OK] 'FEY' -> 'FEY'
+
+  [VAL]   Loss: 0.6131 | Word Acc: 75.57% | Char Acc: 82.74%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_23.pth
+
+  [ETA]   Tahmini kalan sure: 0:13:16
+======================================================================
+
+  Epoch 24 [  0.0%] loss=0.5969 (avg=0.5969) word=75.0% char=85.2% lr=5.00e-05 spd=... step=135298 ETA=(isiniyor...)
+  Epoch 24 [ 69.9%] loss=0.9687 (avg=0.9650) word=67.2% char=76.9% lr=5.00e-05 spd=268 img/s step=135398 ETA=0:00:10
+
+======================================================================
+EPOCH 24/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.9531 | Word Acc: 67.19% | Char Acc: 76.90%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [OK] 'GROSVENOR' -> 'GROSVENOR'
+    [OK] 'SALARY' -> 'SALARY'
+    [X] 'BANK' -> 'BART'
+
+  [VAL]   Loss: 0.6060 | Word Acc: 75.91% | Char Acc: 82.90%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_24.pth
+
+  [ETA]   Tahmini kalan sure: 0:13:42
+======================================================================
+
+  Epoch 25 [  0.0%] loss=0.8861 (avg=0.8861) word=64.1% char=77.5% lr=5.00e-05 spd=... step=135441 ETA=(isiniyor...)
+  Epoch 25 [ 69.9%] loss=0.9470 (avg=0.9464) word=67.7% char=76.2% lr=5.00e-05 spd=273 img/s step=135541 ETA=0:00:09
+
+======================================================================
+EPOCH 25/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.9297 | Word Acc: 67.71% | Char Acc: 76.20%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [X] 'USH' -> 'VL'
+    [OK] 'NO' -> 'NO'
+    [X] 'SPRING' -> 'SIN'
+
+  [VAL]   Loss: 0.6011 | Word Acc: 76.54% | Char Acc: 83.23%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_25.pth
+
+  [ETA]   Tahmini kalan sure: 0:14:02
+======================================================================
+
+  Epoch 26 [  0.0%] loss=0.8247 (avg=0.8247) word=71.9% char=77.1% lr=5.00e-05 spd=... step=135584 ETA=(isiniyor...)
+  Epoch 26 [ 69.9%] loss=0.9301 (avg=0.9291) word=70.8% char=76.8% lr=5.00e-05 spd=273 img/s step=135684 ETA=0:00:09
+
+======================================================================
+EPOCH 26/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.9219 | Word Acc: 70.83% | Char Acc: 76.85%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [OK] 'CLEARANCE' -> 'CLEARANCE'
+    [X] 'FOOD' -> 'FAD'
+    [OK] 'APTECH' -> 'APTECH'
+
+  [VAL]   Loss: 0.5959 | Word Acc: 76.33% | Char Acc: 83.11%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_26.pth
+
+  [ETA]   Tahmini kalan sure: 0:14:18
+======================================================================
+
+  Epoch 27 [  0.0%] loss=0.9533 (avg=0.9533) word=64.1% char=71.0% lr=5.00e-05 spd=... step=135727 ETA=(isiniyor...)
+  Epoch 27 [ 69.9%] loss=0.9173 (avg=0.9177) word=66.1% char=74.7% lr=5.00e-05 spd=272 img/s step=135827 ETA=0:00:09
+
+======================================================================
+EPOCH 27/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.9118 | Word Acc: 66.15% | Char Acc: 74.73%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [OK] 'LOCK' -> 'LOCK'
+    [OK] 'BILLBOARDS' -> 'BILLBOARDS'
+    [X] 'STA' -> 'SILY'
+
+  [VAL]   Loss: 0.5921 | Word Acc: 76.78% | Char Acc: 83.43%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_27.pth
+
+  [ETA]   Tahmini kalan sure: 0:14:28
+======================================================================
+
+  Epoch 28 [  0.0%] loss=0.7575 (avg=0.7575) word=64.1% char=67.6% lr=5.00e-05 spd=... step=135870 ETA=(isiniyor...)
+  Epoch 28 [ 69.9%] loss=0.9137 (avg=0.9122) word=63.0% char=70.3% lr=5.00e-05 spd=274 img/s step=135970 ETA=0:00:09
+
+======================================================================
+EPOCH 28/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.9102 | Word Acc: 63.02% | Char Acc: 70.25%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [OK] 'SHOP' -> 'SHOP'
+    [OK] 'VILLAS' -> 'VILLAS'
+    [X] 'ACCESSORIES' -> 'ACCESORE'
+
+  [VAL]   Loss: 0.5901 | Word Acc: 76.48% | Char Acc: 82.84%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_28.pth
+
+  [ETA]   Tahmini kalan sure: 0:14:34
+======================================================================
+
+  Epoch 29 [  0.0%] loss=0.7289 (avg=0.7289) word=68.8% char=73.2% lr=5.00e-05 spd=... step=136013 ETA=(isiniyor...)
+  Epoch 29 [ 69.9%] loss=0.9062 (avg=0.9045) word=65.6% char=72.7% lr=5.00e-05 spd=263 img/s step=136113 ETA=0:00:10
+
+======================================================================
+EPOCH 29/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.9000 | Word Acc: 65.62% | Char Acc: 72.72%
+  [SURE]  0:00:35
+
+  [ORNEKLER - Train]
+    [OK] 'GRAND' -> 'GRAND'
+    [OK] 'FFICINE' -> 'FFICINE'
+    [OK] '36' -> '36'
+
+  [VAL]   Loss: 0.5831 | Word Acc: 77.39% | Char Acc: 83.74%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_29.pth
+
+  [ETA]   Tahmini kalan sure: 0:14:38
+======================================================================
+
+  Epoch 30 [  0.0%] loss=0.8919 (avg=0.8919) word=68.8% char=79.7% lr=5.00e-05 spd=... step=136156 ETA=(isiniyor...)
+  Epoch 30 [ 69.9%] loss=0.8909 (avg=0.8909) word=63.0% char=71.7% lr=5.00e-05 spd=271 img/s step=136256 ETA=0:00:09
+
+======================================================================
+EPOCH 30/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8837 | Word Acc: 63.02% | Char Acc: 71.73%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [X] 'EXIT' -> 'SAT'
+    [OK] 'ROADS' -> 'ROADS'
+    [OK] '95M' -> '95M'
+
+  [VAL]   Loss: 0.5798 | Word Acc: 77.28% | Char Acc: 83.76%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_30.pth
+
+  [ETA]   Tahmini kalan sure: 0:14:37
+======================================================================
+
+  Epoch 31 [  0.0%] loss=0.6957 (avg=0.6957) word=68.8% char=74.8% lr=5.00e-05 spd=... step=136299 ETA=(isiniyor...)
+  Epoch 31 [ 69.9%] loss=0.8806 (avg=0.8788) word=63.5% char=73.1% lr=5.00e-05 spd=277 img/s step=136399 ETA=0:00:09
+
+======================================================================
+EPOCH 31/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8752 | Word Acc: 63.54% | Char Acc: 73.07%
+  [SURE]  0:00:33
+
+  [ORNEKLER - Train]
+    [OK] 'TOYOTA' -> 'TOYOTA'
+    [X] 'TASTES' -> 'ROBERT'
+    [X] 'MEETS' -> 'CROOTS'
+
+  [VAL]   Loss: 0.5756 | Word Acc: 77.86% | Char Acc: 84.28%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_31.pth
+
+  [ETA]   Tahmini kalan sure: 0:14:33
+======================================================================
+
+  Epoch 32 [  0.0%] loss=0.8260 (avg=0.8260) word=73.4% char=78.5% lr=5.00e-05 spd=... step=136442 ETA=(isiniyor...)
+  Epoch 32 [ 69.9%] loss=0.8442 (avg=0.8440) word=72.4% char=80.8% lr=5.00e-05 spd=278 img/s step=136542 ETA=0:00:09
+
+======================================================================
+EPOCH 32/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8640 | Word Acc: 72.40% | Char Acc: 80.81%
+  [SURE]  0:00:33
+
+  [ORNEKLER - Train]
+    [X] 'SKYLIGHT' -> 'SAT'
+    [OK] 'HOTEL' -> 'HOTEL'
+    [X] 'THERE'S' -> 'SAE'
+
+  [VAL]   Loss: 0.5757 | Word Acc: 77.77% | Char Acc: 84.06%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_32.pth
+
+  [ETA]   Tahmini kalan sure: 0:14:25
+======================================================================
+
+  Epoch 33 [  0.0%] loss=1.1473 (avg=1.1473) word=67.2% char=70.9% lr=5.00e-05 spd=... step=136585 ETA=(isiniyor...)
+  Epoch 33 [ 69.9%] loss=0.8671 (avg=0.8699) word=65.6% char=71.2% lr=5.00e-05 spd=274 img/s step=136685 ETA=0:00:09
+
+======================================================================
+EPOCH 33/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8627 | Word Acc: 65.62% | Char Acc: 71.16%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [X] 'ALIEN' -> 'AIEON'
+    [X] 'THIS' -> 'TRIS'
+    [OK] 'TFT' -> 'TFT'
+
+  [VAL]   Loss: 0.5701 | Word Acc: 78.24% | Char Acc: 84.43%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_33.pth
+
+  [ETA]   Tahmini kalan sure: 0:14:17
+======================================================================
+
+  Epoch 34 [  0.0%] loss=0.8261 (avg=0.8261) word=67.2% char=78.6% lr=5.00e-05 spd=... step=136728 ETA=(isiniyor...)
+  Epoch 34 [ 69.9%] loss=0.8300 (avg=0.8299) word=67.2% char=75.5% lr=5.00e-05 spd=274 img/s step=136828 ETA=0:00:09
+
+======================================================================
+EPOCH 34/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8565 | Word Acc: 67.19% | Char Acc: 75.47%
+  [SURE]  0:00:34
+
+  [ORNEKLER - Train]
+    [OK] 'TICKET' -> 'TICKET'
+    [OK] 'PAGES' -> 'PAGES'
+    [X] 'YOUR' -> 'FOUR'
+
+  [VAL]   Loss: 0.5695 | Word Acc: 78.11% | Char Acc: 84.24%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_34.pth
+
+  [ETA]   Tahmini kalan sure: 0:14:06
+======================================================================
+
+  Epoch 35 [  0.0%] loss=0.7122 (avg=0.7122) word=76.6% char=76.5% lr=5.00e-05 spd=... step=136871 ETA=(isiniyor...)
+  Epoch 35 [ 69.9%] loss=0.8545 (avg=0.8531) word=72.4% char=76.6% lr=5.00e-05 spd=279 img/s step=136971 ETA=0:00:09
+
+======================================================================
+EPOCH 35/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8533 | Word Acc: 72.40% | Char Acc: 76.60%
+  [SURE]  0:00:33
+
+  [ORNEKLER - Train]
+    [OK] 'RESULTS' -> 'RESULTS'
+    [OK] 'CANCERCA' -> 'CANCERCA'
+    [OK] 'OIL' -> 'OIL'
+
+  [VAL]   Loss: 0.5672 | Word Acc: 78.24% | Char Acc: 84.34%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_35.pth
+
+  [ETA]   Tahmini kalan sure: 0:13:52
+======================================================================
+
+  Epoch 36 [  0.0%] loss=0.9918 (avg=0.9918) word=62.5% char=69.8% lr=5.00e-05 spd=... step=137014 ETA=(isiniyor...)
+  Epoch 36 [ 69.9%] loss=0.8440 (avg=0.8454) word=65.6% char=73.3% lr=5.00e-05 spd=285 img/s step=137114 ETA=0:00:09
+
+======================================================================
+EPOCH 36/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8414 | Word Acc: 65.62% | Char Acc: 73.31%
+  [SURE]  0:00:33
+
+  [ORNEKLER - Train]
+    [OK] 'FAST' -> 'FAST'
+    [OK] 'THE' -> 'THE'
+    [X] 'JUST' -> 'SUST'
+
+  [VAL]   Loss: 0.5637 | Word Acc: 78.37% | Char Acc: 84.70%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_36.pth
+
+  [ETA]   Tahmini kalan sure: 0:13:37
+======================================================================
+
+  Epoch 37 [  0.0%] loss=0.8832 (avg=0.8832) word=71.9% char=76.0% lr=5.00e-05 spd=... step=137157 ETA=(isiniyor...)
+  Epoch 37 [ 69.9%] loss=0.8295 (avg=0.8300) word=68.8% char=74.9% lr=5.00e-05 spd=306 img/s step=137257 ETA=0:00:08
+
+======================================================================
+EPOCH 37/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8273 | Word Acc: 68.75% | Char Acc: 74.85%
+  [SURE]  0:00:26
+
+  [ORNEKLER - Train]
+    [OK] 'ROAD' -> 'ROAD'
+    [OK] 'SALE' -> 'SALE'
+    [X] 'CITIBANK' -> ''
+
+  [VAL]   Loss: 0.5624 | Word Acc: 78.49% | Char Acc: 84.62%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_37.pth
+
+  [ETA]   Tahmini kalan sure: 0:13:09
+======================================================================
+
+  Epoch 38 [  0.0%] loss=0.8949 (avg=0.8949) word=68.8% char=72.9% lr=5.00e-05 spd=... step=137300 ETA=(isiniyor...)
+  Epoch 38 [ 69.9%] loss=0.8408 (avg=0.8413) word=72.4% char=78.0% lr=5.00e-05 spd=643 img/s step=137400 ETA=0:00:04
+
+======================================================================
+EPOCH 38/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8354 | Word Acc: 72.40% | Char Acc: 78.01%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'HILLCREST' -> 'HILLCREST'
+    [OK] 'LUCILLE' -> 'LUCILLE'
+    [OK] 'AIRES' -> 'AIRES'
+
+  [VAL]   Loss: 0.5590 | Word Acc: 78.68% | Char Acc: 84.79%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_38.pth
+
+  [ETA]   Tahmini kalan sure: 0:12:33
+======================================================================
+
+  Epoch 39 [  0.0%] loss=0.7115 (avg=0.7115) word=70.3% char=74.0% lr=5.00e-05 spd=... step=137443 ETA=(isiniyor...)
+  Epoch 39 [ 69.9%] loss=0.8251 (avg=0.8240) word=71.4% char=77.8% lr=5.00e-05 spd=637 img/s step=137543 ETA=0:00:04
+
+======================================================================
+EPOCH 39/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8213 | Word Acc: 71.35% | Char Acc: 77.80%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'SPINNERS' -> 'SPINNERS'
+    [OK] 'CARD' -> 'CARD'
+    [OK] 'SERVIS' -> 'SERVIS'
+
+  [VAL]   Loss: 0.5579 | Word Acc: 78.68% | Char Acc: 84.85%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_39.pth
+
+  [ETA]   Tahmini kalan sure: 0:11:58
+======================================================================
+
+  Epoch 40 [  0.0%] loss=0.6271 (avg=0.6271) word=75.0% char=81.4% lr=5.00e-05 spd=... step=137586 ETA=(isiniyor...)
+  Epoch 40 [ 69.9%] loss=0.8018 (avg=0.8000) word=72.4% char=77.4% lr=5.00e-05 spd=632 img/s step=137686 ETA=0:00:04
+
+======================================================================
+EPOCH 40/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8149 | Word Acc: 72.40% | Char Acc: 77.41%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [X] 'IMAGES' -> 'CHANE'
+    [OK] 'US' -> 'US'
+    [OK] '372SIGN' -> '372SIGN'
+
+  [VAL]   Loss: 0.5562 | Word Acc: 78.60% | Char Acc: 84.75%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_40.pth
+
+  [ETA]   Tahmini kalan sure: 0:11:23
+======================================================================
+
+  Epoch 41 [  0.0%] loss=1.1049 (avg=1.1049) word=67.2% char=68.5% lr=5.00e-05 spd=... step=137729 ETA=(isiniyor...)
+  Epoch 41 [ 69.9%] loss=0.7865 (avg=0.7897) word=72.4% char=76.9% lr=5.00e-05 spd=633 img/s step=137829 ETA=0:00:04
+
+======================================================================
+EPOCH 41/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.8078 | Word Acc: 72.40% | Char Acc: 76.90%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'BEST' -> 'BEST'
+    [OK] 'CO' -> 'CO'
+    [OK] 'STATE' -> 'STATE'
+
+  [VAL]   Loss: 0.5567 | Word Acc: 78.35% | Char Acc: 84.38%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_41.pth
+
+  [ETA]   Tahmini kalan sure: 0:10:50
+======================================================================
+
+  Epoch 42 [  0.0%] loss=0.8724 (avg=0.8724) word=75.0% char=76.0% lr=5.00e-05 spd=... step=137872 ETA=(isiniyor...)
+  Epoch 42 [ 69.9%] loss=0.7877 (avg=0.7885) word=69.3% char=71.4% lr=5.00e-05 spd=644 img/s step=137972 ETA=0:00:04
+
+======================================================================
+EPOCH 42/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7939 | Word Acc: 69.27% | Char Acc: 71.37%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'DIRECTLY' -> 'DIRECTLY'
+    [OK] 'NOMINATIONS' -> 'NOMINATIONS'
+    [OK] 'LEDGER' -> 'LEDGER'
+
+  [VAL]   Loss: 0.5547 | Word Acc: 78.94% | Char Acc: 85.10%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_42.pth
+
+  [ETA]   Tahmini kalan sure: 0:10:17
+======================================================================
+
+  Epoch 43 [  0.0%] loss=0.9271 (avg=0.9271) word=67.2% char=77.1% lr=5.00e-05 spd=... step=138015 ETA=(isiniyor...)
+  Epoch 43 [ 69.9%] loss=0.8019 (avg=0.8031) word=65.6% char=71.9% lr=5.00e-05 spd=643 img/s step=138115 ETA=0:00:04
+
+======================================================================
+EPOCH 43/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7901 | Word Acc: 65.62% | Char Acc: 71.95%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'THE' -> 'THE'
+    [X] 'LIFE' -> 'LILE'
+    [OK] 'INDIA' -> 'INDIA'
+
+  [VAL]   Loss: 0.5539 | Word Acc: 78.98% | Char Acc: 85.00%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_43.pth
+
+  [ETA]   Tahmini kalan sure: 0:09:44
+======================================================================
+
+  Epoch 44 [  0.0%] loss=0.4470 (avg=0.4470) word=76.6% char=85.8% lr=5.00e-05 spd=... step=138158 ETA=(isiniyor...)
+  Epoch 44 [ 69.9%] loss=0.7860 (avg=0.7826) word=70.3% char=79.0% lr=5.00e-05 spd=673 img/s step=138258 ETA=0:00:03
+
+======================================================================
+EPOCH 44/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7923 | Word Acc: 70.31% | Char Acc: 79.03%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [OK] 'LOOK' -> 'LOOK'
+    [X] 'ADIDAS' -> 'ODIDOS'
+    [OK] 'MEN' -> 'MEN'
+
+  [VAL]   Loss: 0.5523 | Word Acc: 79.09% | Char Acc: 85.17%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_44.pth
+
+  [ETA]   Tahmini kalan sure: 0:09:12
+======================================================================
+
+  Epoch 45 [  0.0%] loss=0.9699 (avg=0.9699) word=59.4% char=64.5% lr=5.00e-05 spd=... step=138301 ETA=(isiniyor...)
+  Epoch 45 [ 69.9%] loss=0.7892 (avg=0.7910) word=65.1% char=73.5% lr=5.00e-05 spd=683 img/s step=138401 ETA=0:00:03
+
+======================================================================
+EPOCH 45/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7790 | Word Acc: 65.10% | Char Acc: 73.50%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [OK] 'BRENNER' -> 'BRENNER'
+    [OK] 'MONEY' -> 'MONEY'
+    [OK] 'USER' -> 'USER'
+
+  [VAL]   Loss: 0.5510 | Word Acc: 79.34% | Char Acc: 85.40%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_45.pth
+
+  [ETA]   Tahmini kalan sure: 0:08:40
+======================================================================
+
+  Epoch 46 [  0.0%] loss=0.7022 (avg=0.7022) word=70.3% char=77.2% lr=5.00e-05 spd=... step=138444 ETA=(isiniyor...)
+  Epoch 46 [ 69.9%] loss=0.7880 (avg=0.7872) word=69.8% char=76.5% lr=5.00e-05 spd=666 img/s step=138544 ETA=0:00:04
+
+======================================================================
+EPOCH 46/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7738 | Word Acc: 69.79% | Char Acc: 76.54%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'HAPPY' -> 'HAPPY'
+    [OK] 'YOU' -> 'YOU'
+    [X] 'VILLA' -> 'SLLA'
+
+  [VAL]   Loss: 0.5511 | Word Acc: 79.64% | Char Acc: 85.58%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_46.pth
+
+  [ETA]   Tahmini kalan sure: 0:08:09
+======================================================================
+
+  Epoch 47 [  0.0%] loss=0.8467 (avg=0.8467) word=73.4% char=77.7% lr=5.00e-05 spd=... step=138587 ETA=(isiniyor...)
+  Epoch 47 [ 69.9%] loss=0.7624 (avg=0.7632) word=70.3% char=74.5% lr=5.00e-05 spd=632 img/s step=138687 ETA=0:00:04
+
+======================================================================
+EPOCH 47/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7692 | Word Acc: 70.31% | Char Acc: 74.50%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'HOT' -> 'HOT'
+    [OK] 'WHITE' -> 'WHITE'
+    [X] 'CITIBANK' -> ''
+
+  [VAL]   Loss: 0.5513 | Word Acc: 79.22% | Char Acc: 85.29%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_47.pth
+
+  [ETA]   Tahmini kalan sure: 0:07:39
+======================================================================
+
+  Epoch 48 [  0.0%] loss=0.8618 (avg=0.8618) word=67.2% char=75.1% lr=5.00e-05 spd=... step=138730 ETA=(isiniyor...)
+  Epoch 48 [ 69.9%] loss=0.7596 (avg=0.7606) word=69.8% char=79.7% lr=5.00e-05 spd=637 img/s step=138830 ETA=0:00:04
+
+======================================================================
+EPOCH 48/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7648 | Word Acc: 69.79% | Char Acc: 79.73%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] '30' -> '30'
+    [OK] 'LOUD' -> 'LOUD'
+    [OK] 'SERA' -> 'SERA'
+
+  [VAL]   Loss: 0.5492 | Word Acc: 79.24% | Char Acc: 85.21%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_48.pth
+
+  [ETA]   Tahmini kalan sure: 0:07:10
+======================================================================
+
+  Epoch 49 [  0.0%] loss=0.6589 (avg=0.6589) word=70.3% char=80.8% lr=5.00e-05 spd=... step=138873 ETA=(isiniyor...)
+  Epoch 49 [ 69.9%] loss=0.7589 (avg=0.7579) word=67.7% char=76.3% lr=5.00e-05 spd=688 img/s step=138973 ETA=0:00:03
+
+======================================================================
+EPOCH 49/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7616 | Word Acc: 67.71% | Char Acc: 76.35%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [OK] 'INSURANCE' -> 'INSURANCE'
+    [OK] '1911' -> '1911'
+    [OK] 'ATELIER' -> 'ATELIER'
+
+  [VAL]   Loss: 0.5485 | Word Acc: 79.32% | Char Acc: 85.30%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_49.pth
+
+  [ETA]   Tahmini kalan sure: 0:06:40
+======================================================================
+
+  Epoch 50 [  0.0%] loss=1.0242 (avg=1.0242) word=67.2% char=70.5% lr=5.00e-05 spd=... step=139016 ETA=(isiniyor...)
+  Epoch 50 [ 69.9%] loss=0.7604 (avg=0.7630) word=65.6% char=71.0% lr=5.00e-05 spd=695 img/s step=139116 ETA=0:00:03
+
+======================================================================
+EPOCH 50/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7521 | Word Acc: 65.62% | Char Acc: 71.03%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [X] 'SKYLIGHT' -> 'SAVETDET'
+    [X] 'WWWCARTOONSTOCKCOM' -> 'WWWCARTONSOCCOM'
+    [X] 'LEVEL' -> 'SVT'
+
+  [VAL]   Loss: 0.5492 | Word Acc: 79.38% | Char Acc: 85.26%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_50.pth
+
+  [ETA]   Tahmini kalan sure: 0:06:11
+======================================================================
+
+  Epoch 51 [  0.0%] loss=0.6127 (avg=0.6127) word=71.9% char=77.3% lr=5.00e-05 spd=... step=139159 ETA=(isiniyor...)
+  Epoch 51 [ 69.9%] loss=0.7540 (avg=0.7526) word=71.9% char=77.7% lr=5.00e-05 spd=678 img/s step=139259 ETA=0:00:03
+
+======================================================================
+EPOCH 51/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7440 | Word Acc: 71.88% | Char Acc: 77.68%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [OK] 'ADMISSIONS' -> 'ADMISSIONS'
+    [X] 'DATA/SOCIAL' -> 'DATASOCIAL'
+    [OK] 'TOTAL' -> 'TOTAL'
+
+  [VAL]   Loss: 0.5488 | Word Acc: 79.36% | Char Acc: 85.21%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_51.pth
+
+  [ETA]   Tahmini kalan sure: 0:05:42
+======================================================================
+
+  Epoch 52 [  0.0%] loss=0.6165 (avg=0.6165) word=82.8% char=81.3% lr=5.00e-05 spd=... step=139302 ETA=(isiniyor...)
+  Epoch 52 [ 69.9%] loss=0.7448 (avg=0.7435) word=80.2% char=80.8% lr=5.00e-05 spd=695 img/s step=139402 ETA=0:00:03
+
+======================================================================
+EPOCH 52/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7396 | Word Acc: 80.21% | Char Acc: 80.79%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [OK] 'FOR' -> 'FOR'
+    [OK] '56161' -> '56161'
+    [OK] 'LA' -> 'LA'
+
+  [VAL]   Loss: 0.5483 | Word Acc: 79.64% | Char Acc: 85.27%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_52.pth
+
+  [ETA]   Tahmini kalan sure: 0:05:14
+======================================================================
+
+  Epoch 53 [  0.0%] loss=0.8559 (avg=0.8559) word=65.6% char=71.4% lr=5.00e-05 spd=... step=139445 ETA=(isiniyor...)
+  Epoch 53 [ 69.9%] loss=0.7505 (avg=0.7515) word=68.8% char=72.6% lr=5.00e-05 spd=694 img/s step=139545 ETA=0:00:03
+
+======================================================================
+EPOCH 53/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7336 | Word Acc: 68.75% | Char Acc: 72.58%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [X] 'AND' -> 'IND'
+    [X] 'OVERTAKING' -> 'OVERTAING'
+    [OK] 'EXECUTIVE' -> 'EXECUTIVE'
+
+  [VAL]   Loss: 0.5489 | Word Acc: 79.85% | Char Acc: 85.52%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_53.pth
+
+  [ETA]   Tahmini kalan sure: 0:04:46
+======================================================================
+
+  Epoch 54 [  0.0%] loss=0.6126 (avg=0.6126) word=73.4% char=80.6% lr=5.00e-05 spd=... step=139588 ETA=(isiniyor...)
+  Epoch 54 [ 69.9%] loss=0.7336 (avg=0.7324) word=72.9% char=80.8% lr=5.00e-05 spd=684 img/s step=139688 ETA=0:00:03
+
+======================================================================
+EPOCH 54/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7356 | Word Acc: 72.92% | Char Acc: 80.77%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [X] 'THAI' -> 'THAYAS'
+    [OK] 'THE' -> 'THE'
+    [X] 'GIORDAN' -> 'STE'
+
+  [VAL]   Loss: 0.5472 | Word Acc: 79.55% | Char Acc: 85.20%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_54.pth
+
+  [ETA]   Tahmini kalan sure: 0:04:18
+======================================================================
+
+  Epoch 55 [  0.0%] loss=0.8657 (avg=0.8657) word=68.8% char=72.0% lr=5.00e-05 spd=... step=139731 ETA=(isiniyor...)
+  Epoch 55 [ 69.9%] loss=0.7205 (avg=0.7219) word=69.3% char=71.8% lr=5.00e-05 spd=677 img/s step=139831 ETA=0:00:03
+
+======================================================================
+EPOCH 55/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7241 | Word Acc: 69.27% | Char Acc: 71.78%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [X] 'PERSONAL' -> 'PERSORAL'
+    [OK] 'DEAR' -> 'DEAR'
+    [X] 'CLEMENTI' -> 'CEMENTI'
+
+  [VAL]   Loss: 0.5499 | Word Acc: 79.89% | Char Acc: 85.32%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_55.pth
+
+  [ETA]   Tahmini kalan sure: 0:03:51
+======================================================================
+
+  Epoch 56 [  0.0%] loss=0.5926 (avg=0.5926) word=73.4% char=80.7% lr=5.00e-05 spd=... step=139874 ETA=(isiniyor...)
+  Epoch 56 [ 69.9%] loss=0.7267 (avg=0.7254) word=70.3% char=77.5% lr=5.00e-05 spd=671 img/s step=139974 ETA=0:00:04
+
+======================================================================
+EPOCH 56/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7245 | Word Acc: 70.31% | Char Acc: 77.55%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'WINES' -> 'WINES'
+    [X] 'GREEN' -> 'GREN'
+    [OK] 'FOUND' -> 'FOUND'
+
+  [VAL]   Loss: 0.5491 | Word Acc: 79.62% | Char Acc: 85.27%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_56.pth
+
+  [ETA]   Tahmini kalan sure: 0:03:24
+======================================================================
+
+  Epoch 57 [  0.0%] loss=0.6620 (avg=0.6620) word=75.0% char=80.4% lr=5.00e-05 spd=... step=140017 ETA=(isiniyor...)
+  Epoch 57 [ 69.9%] loss=0.7176 (avg=0.7170) word=75.0% char=81.3% lr=5.00e-05 spd=629 img/s step=140117 ETA=0:00:04
+
+======================================================================
+EPOCH 57/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7155 | Word Acc: 75.00% | Char Acc: 81.29%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'ASHLEY' -> 'ASHLEY'
+    [OK] 'BANK' -> 'BANK'
+    [X] 'QAARVAN' -> 'DAARVEN'
+
+  [VAL]   Loss: 0.5496 | Word Acc: 79.77% | Char Acc: 85.32%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_57.pth
+
+  [ETA]   Tahmini kalan sure: 0:02:58
+======================================================================
+
+  Epoch 58 [  0.0%] loss=0.5902 (avg=0.5902) word=75.0% char=81.4% lr=5.00e-05 spd=... step=140160 ETA=(isiniyor...)
+  Epoch 58 [ 69.9%] loss=0.7144 (avg=0.7131) word=77.1% char=79.1% lr=5.00e-05 spd=643 img/s step=140260 ETA=0:00:04
+
+======================================================================
+EPOCH 58/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7117 | Word Acc: 77.08% | Char Acc: 79.11%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'BREWERY' -> 'BREWERY'
+    [OK] 'YOUR' -> 'YOUR'
+    [OK] '6' -> '6'
+
+  [VAL]   Loss: 0.5497 | Word Acc: 79.83% | Char Acc: 85.18%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_58.pth
+
+  [ETA]   Tahmini kalan sure: 0:02:32
+======================================================================
+
+  Epoch 59 [  0.0%] loss=0.5040 (avg=0.5040) word=75.0% char=79.4% lr=2.50e-05 spd=... step=140303 ETA=(isiniyor...)
+  Epoch 59 [ 69.9%] loss=0.7010 (avg=0.6990) word=66.7% char=74.1% lr=2.50e-05 spd=694 img/s step=140403 ETA=0:00:03
+
+======================================================================
+EPOCH 59/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7005 | Word Acc: 66.67% | Char Acc: 74.13%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [OK] '212' -> '212'
+    [OK] 'THE' -> 'THE'
+    [OK] 'CATHAY' -> 'CATHAY'
+
+  [VAL]   Loss: 0.5505 | Word Acc: 80.15% | Char Acc: 85.46%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_59.pth
+
+  [ETA]   Tahmini kalan sure: 0:02:06
+======================================================================
+
+  Epoch 60 [  0.0%] loss=0.8342 (avg=0.8342) word=68.8% char=75.5% lr=2.50e-05 spd=... step=140446 ETA=(isiniyor...)
+  Epoch 60 [ 69.9%] loss=0.7096 (avg=0.7108) word=70.3% char=75.1% lr=2.50e-05 spd=688 img/s step=140546 ETA=0:00:03
+
+======================================================================
+EPOCH 60/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7085 | Word Acc: 70.31% | Char Acc: 75.12%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [OK] 'AN' -> 'AN'
+    [OK] 'GARIBYAN' -> 'GARIBYAN'
+    [OK] 'VIEW' -> 'VIEW'
+
+  [VAL]   Loss: 0.5506 | Word Acc: 79.85% | Char Acc: 85.16%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_60.pth
+
+  [ETA]   Tahmini kalan sure: 0:01:40
+======================================================================
+
+  Epoch 61 [  0.0%] loss=0.4784 (avg=0.4784) word=78.1% char=84.7% lr=2.50e-05 spd=... step=140589 ETA=(isiniyor...)
+  Epoch 61 [ 69.9%] loss=0.7045 (avg=0.7023) word=79.2% char=86.7% lr=2.50e-05 spd=652 img/s step=140689 ETA=0:00:04
+
+======================================================================
+EPOCH 61/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7028 | Word Acc: 79.17% | Char Acc: 86.75%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'BUKAN' -> 'BUKAN'
+    [X] 'LOVE' -> 'FOVE'
+    [OK] '95' -> '95'
+
+  [VAL]   Loss: 0.5500 | Word Acc: 80.06% | Char Acc: 85.33%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_61.pth
+
+  [ETA]   Tahmini kalan sure: 0:01:15
+======================================================================
+
+  Epoch 62 [  0.0%] loss=0.4331 (avg=0.4331) word=84.4% char=88.4% lr=2.50e-05 spd=... step=140732 ETA=(isiniyor...)
+  Epoch 62 [ 69.9%] loss=0.6943 (avg=0.6917) word=74.5% char=81.8% lr=2.50e-05 spd=648 img/s step=140832 ETA=0:00:04
+
+======================================================================
+EPOCH 62/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.6992 | Word Acc: 74.48% | Char Acc: 81.78%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'COTTAGE' -> 'COTTAGE'
+    [OK] 'STATE' -> 'STATE'
+    [X] 'WHERE' -> 'AAERE'
+
+  [VAL]   Loss: 0.5505 | Word Acc: 79.98% | Char Acc: 85.24%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_62.pth
+
+  [ETA]   Tahmini kalan sure: 0:00:49
+======================================================================
+
+  Epoch 63 [  0.0%] loss=0.7030 (avg=0.7030) word=65.6% char=72.2% lr=1.25e-05 spd=... step=140875 ETA=(isiniyor...)
+  Epoch 63 [ 69.9%] loss=0.6808 (avg=0.6810) word=69.3% char=77.9% lr=1.25e-05 spd=641 img/s step=140975 ETA=0:00:04
+
+======================================================================
+EPOCH 63/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.7007 | Word Acc: 69.27% | Char Acc: 77.95%
+  [SURE]  0:00:14
+
+  [ORNEKLER - Train]
+    [OK] 'MART' -> 'MART'
+    [OK] 'NOW' -> 'NOW'
+    [OK] 'BEGIN' -> 'BEGIN'
+
+  [VAL]   Loss: 0.5508 | Word Acc: 80.02% | Char Acc: 85.16%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_63.pth
+
+  [ETA]   Tahmini kalan sure: 0:00:24
+======================================================================
+
+  Epoch 64 [  0.0%] loss=0.7998 (avg=0.7998) word=73.4% char=76.9% lr=1.25e-05 spd=... step=141018 ETA=(isiniyor...)
+  Epoch 64 [ 69.9%] loss=0.6924 (avg=0.6934) word=72.9% char=77.0% lr=1.25e-05 spd=691 img/s step=141118 ETA=0:00:03
+
+======================================================================
+EPOCH 64/64 TAMAMLANDI
+======================================================================
+  [TRAIN] Loss: 0.6926 | Word Acc: 72.92% | Char Acc: 77.00%
+  [SURE]  0:00:13
+
+  [ORNEKLER - Train]
+    [OK] 'HOPPERS' -> 'HOPPERS'
+    [X] 'SENSITIV' -> 'SOR'
+    [X] 'UNO' -> 'UNA'
+
+  [VAL]   Loss: 0.5512 | Word Acc: 80.25% | Char Acc: 85.30%
+
+  [ORNEKLER - Val]
+    [OK] 'PRIVATE' -> 'PRIVATE'
+    [OK] 'PARKING' -> 'PARKING'
+    [OK] 'SALUTES' -> 'SALUTES'
+    [OK] 'DOLCE' -> 'DOLCE'
+    [OK] 'GABBANA' -> 'GABBANA'
+
+  [KAYIT] Checkpoint kaydedildi: epoch_64.pth
+
+  [ETA]   Tahmini kalan sure: 0:00:00
+======================================================================
+
+
+======================================================================
+EGITIM TAMAMLANDI!
+======================================================================
+  Toplam sure: 0:26:21
+  En iyi Val Acc: 89.22%
+  Modeller: C:\Ocr\checkpoints\realworld_finetune
+======================================================================

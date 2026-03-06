@@ -75,7 +75,7 @@ recognition:
     variable_width: true  # Enable dynamic width based on text length
     decoder: "prefix"     # greedy | prefix  (CTCPrefixDecoder daha dogru)
 
-  weights_path: "ocr_engine/recognition/weights/crnn.pth"
+  weights_path: "checkpoints/realworld_finetune/final_model.pth"
 
   # Attention modu icin ek ayarlar
   attention:

@@ -52,6 +52,10 @@ class OCRResponse(BaseModel):
         ...,
         description="Gorsel boyutu {width, height}"
     )
+    visualized_image: Optional[str] = Field(
+        default=None,
+        description="Bounding box'larin cizildigi gorsel (base64 PNG). <img> tag ile direkt kullanilabilir."
+    )
     metadata: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Ek metadata"

@@ -162,36 +162,33 @@ class OCRPipeline:
             self.perspective_corrector = None
 
     def _init_detection(self, weights_path: Optional[str]):
-        """Detection modelini baslat"""
+        """Detection modelini baslat — EasyOCR CRAFT backend"""
         det_cfg = self.config.get('detection', {})
-        model_cfg = det_cfg.get('model', {})
-        
-        # Model
-        self.detection_model = DBNet(
-            backbone=model_cfg.get('backbone', 'resnet18'),
-            pretrained=model_cfg.get('pretrained', True)
-        ).to(self.device)
-        
-        # Agirliklar
-        if weights_path is None:
-            weights_path = det_cfg.get('weights_path')
-        
-        if weights_path and Path(weights_path).exists():
-            ckpt = torch.load(weights_path, map_location=self.device, weights_only=False)
-            state_dict = ckpt.get('model_state_dict', ckpt) if isinstance(ckpt, dict) else ckpt
-            self.detection_model.load_state_dict(state_dict)
-            print(f"Detection agirliklari yuklendi: {weights_path}")
-        
-        self.detection_model.eval()
-        
-        # Post-processor
-        inf_cfg = det_cfg.get('inference', {})
-        self.detection_postprocessor = DBPostProcessor(
-            threshold=inf_cfg.get('threshold', 0.3),
-            box_threshold=inf_cfg.get('box_threshold', 0.5),
-            max_candidates=inf_cfg.get('max_candidates', 1000),
-            unclip_ratio=inf_cfg.get('unclip_ratio', 1.5)
-        )
+        use_gpu = (str(self.device) != 'cpu')
+
+        try:
+            import easyocr
+            self._easy_ocr = easyocr.Reader(['en', 'tr'], gpu=use_gpu, verbose=False)
+            self._paddle_proc = None
+            self.detection_model = 'easy'  # sentinel
+            print("Detection: EasyOCR (CRAFT) yuklendi.")
+        except Exception as e:
+            print(f"[UYARI] EasyOCR yuklenemedi ({e}), DBNet'e geri donuluyor.")
+            self._easy_ocr = None
+            self._paddle_proc = None
+            model_cfg = det_cfg.get('model', {})
+            self.detection_model = DBNet(
+                backbone=model_cfg.get('backbone', 'resnet18'),
+                pretrained=model_cfg.get('pretrained', True)
+            ).to(self.device)
+            self.detection_model.eval()
+            inf_cfg = det_cfg.get('inference', {})
+            self.detection_postprocessor = DBPostProcessor(
+                threshold=inf_cfg.get('threshold', 0.3),
+                box_threshold=inf_cfg.get('box_threshold', 0.5),
+                max_candidates=inf_cfg.get('max_candidates', 1000),
+                unclip_ratio=inf_cfg.get('unclip_ratio', 1.5)
+            )
     
     def _init_recognition(self, weights_path: Optional[str]):
         """Recognition modelini baslat (CTC veya Attention)"""
@@ -347,12 +344,13 @@ class OCRPipeline:
         original_image = image.copy()
         original_size = image.shape[:2]  # (height, width)
         
-        # Preprocessing
+        # Preprocessing — detection ve recognition ayni goruntu uzerinde calissin
         image = self._preprocess(image)
+        preprocessed_image = image  # hem detection hem recognition bunu kullanir
         
         # Detection
         if not recognize_only:
-            boxes = self._detect(image)
+            boxes = self._detect(preprocessed_image)
             # Adaptif siralama (satir gruplama ile)
             boxes = adaptive_sort_boxes(boxes)
         
@@ -361,11 +359,12 @@ class OCRPipeline:
             text_boxes = [TextBox(box=box) for box in (boxes or [])]
             return OCRResult(
                 text_boxes=text_boxes,
-                processing_time=processing_time
+                processing_time=processing_time,
+                source_image=preprocessed_image,
             )
         
-        # Recognition
-        text_boxes = self._recognize(original_image, boxes)
+        # Recognition — preprocessed goruntu uzerinde (detection ile ayni)
+        text_boxes = self._recognize(preprocessed_image, boxes)
 
         # Spell check (config veya cagiran tarafin tercihi dogrultusunda)
         apply_spell = spell_check if spell_check is not None else bool(self._spell_checkers)
@@ -390,7 +389,8 @@ class OCRPipeline:
         return OCRResult(
             text_boxes=text_boxes,
             processing_time=processing_time,
-            layout=layout
+            layout=layout,
+            source_image=preprocessed_image,
         )
     
     def _preprocess(self, image: np.ndarray) -> np.ndarray:
@@ -428,33 +428,53 @@ class OCRPipeline:
 
         return image
     
-    @torch.no_grad()
     def _detect(self, image: np.ndarray) -> List[np.ndarray]:
         """Metin bolgelerini tespit et"""
+
+        # ── EasyOCR CRAFT backend (detection-only, recognition bizim CRNN) ──────
+        if self.detection_model == 'easy':
+            # mag_ratio>1 kucuk metni buyutup yakalar
+            # text_threshold/link_threshold dusurulurse daha fazla aday cikar
+            horizontal_list, free_list = self._easy_ocr.detect(
+                image,
+                min_size=10,
+                text_threshold=0.6,
+                low_text=0.35,
+                link_threshold=0.3,
+                canvas_size=2560,
+                mag_ratio=1.5,
+                slope_ths=0.2,
+                ycenter_ths=0.5,
+                height_ths=0.5,
+                width_ths=0.6,
+                add_margin=0.1,
+            )
+            boxes = []
+            if horizontal_list:
+                for (x_min, x_max, y_min, y_max) in horizontal_list[0]:
+                    pts = np.array([
+                        [x_min, y_min], [x_max, y_min],
+                        [x_max, y_max], [x_min, y_max],
+                    ], dtype=np.float32)
+                    boxes.append(pts)
+            if free_list:
+                for pts in free_list[0]:
+                    boxes.append(np.array(pts, dtype=np.float32))
+            return boxes
+
+        # ── DBNet fallback ─────────────────────────────────────────
         original_size = image.shape[:2]
-        
-        # Detection icin hazirla
-        # Resize to detection input size
         det_cfg = self.config.get('detection', {})
         det_size = det_cfg.get('input_size', [640, 640])
-        
         resized = cv2.resize(image, (det_size[0], det_size[1]))
-        
-        # RGB'ye cevir ve normalize et
         rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
         normalized = self.image_processor.normalize(rgb)
-        
-        # Tensor'e cevir: [B, C, H, W]
         tensor = torch.from_numpy(normalized).permute(2, 0, 1).unsqueeze(0)
         tensor = tensor.to(self.device)
-        
-        # Detection
-        outputs = self.detection_model(tensor)
+        with torch.no_grad():
+            outputs = self.detection_model(tensor)
         prob_map = outputs['prob_map'][0, 0].cpu().numpy()
-        
-        # Post-process
         boxes = self.detection_postprocessor(prob_map, original_size)
-        
         return boxes
     
     @torch.no_grad()
@@ -465,138 +485,224 @@ class OCRPipeline:
         batch_size: int = 32
     ) -> List[TextBox]:
         """
-        Tespit edilen bolgelerdeki metni tanir (Batch processing)
-        
-        Args:
-            image: Kaynak gorsel
-            boxes: Tespit edilen kutular
-            batch_size: Batch boyutu
-            
-        Returns:
-            TextBox listesi
+        Tespit edilen bolgelerdeki metni tanir.
+        Her satir once kelimelerine ayrilir; her kelime ayri ayri
+        CRNN'den gecirilir — boylece CTC'ye giren dizi cok daha kisa
+        kalir ve dogruluk onemli olcude artar.
         """
         from .detection.postprocess import correct_box_rotation
-        
+
         if len(boxes) == 0:
             return []
-        
-        # 1. Tum crop'lari hazirla
-        crops = []
-        valid_indices = []
-        
+
+        # 1. Her satir kutusunu kelime crop'larina bol
+        # word_items: (line_idx, word_poly, resized_gray)
+        word_items: List[Tuple[int, np.ndarray, np.ndarray]] = []
+
         for i, box in enumerate(boxes):
             try:
-                # Per-region rotation correction
                 crop, _ = correct_box_rotation(image, box, angle_threshold=5.0)
-                
                 if crop.size == 0:
-                    crops.append(None)
                     continue
-                
-                # Grayscale'e cevir
-                if len(crop.shape) == 3:
-                    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-                else:
-                    gray = crop
-                
-                # Yuksekligi ayarla
-                h, w = gray.shape[:2]
-                scale = self.rec_input_height / h
-                new_w = int(w * scale)
-                gray = cv2.resize(gray, (new_w, self.rec_input_height))
-                
-                crops.append(gray)
-                valid_indices.append(i)
-                
+
+                gray = (cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+                        if len(crop.shape) == 3 else crop.copy())
+
+                # Kelimelerine bol (orijinal cozunurlukta, kaliteli projeksiyon icin)
+                word_pairs = self._split_line_to_words(gray, box)
+
+                for word_gray, word_poly in word_pairs:
+                    h, w = word_gray.shape[:2]
+                    if h == 0 or w == 0:
+                        continue
+                    scale   = self.rec_input_height / h
+                    new_w   = max(1, int(w * scale))
+                    resized = cv2.resize(word_gray, (new_w, self.rec_input_height))
+                    word_items.append((i, word_poly, resized))
+
             except Exception:
-                crops.append(None)
-        
-        # 2. Batch halinde isle
-        text_boxes = [TextBox(box=box, text="", confidence=0.0) for box in boxes]
-        
-        # Valid crop'lari batch'le
-        valid_crops = [(valid_indices[j], crops[valid_indices[j]]) 
-                       for j in range(len(valid_indices)) if crops[valid_indices[j]] is not None]
-        
-        if not valid_crops:
-            return text_boxes
-        
-        # Batch'lere bol
-        for batch_start in range(0, len(valid_crops), batch_size):
-            batch_items = valid_crops[batch_start:batch_start + batch_size]
-            batch_indices = [item[0] for item in batch_items]
-            batch_crops = [item[1] for item in batch_items]
-            
-            # Batch icindeki tum crop'lari ayni genislige getir
-            # Variable width: max_width'e kadar izin ver
-            target_width = self.rec_max_width if self.variable_width else self.rec_input_width
-            max_width = min(
-                max(crop.shape[1] for crop in batch_crops),
-                target_width
+                pass
+
+        if not word_items:
+            return [TextBox(box=box, text="", confidence=0.0) for box in boxes]
+
+        # 2. Toplu cikarim — kelime birimleri uzerinden
+        line_word_texts: List[List[str]]       = [[] for _ in range(len(boxes))]
+        line_word_confs: List[List[float]]     = [[] for _ in range(len(boxes))]
+        line_word_polys: List[List[np.ndarray]]= [[] for _ in range(len(boxes))]
+
+        for batch_start in range(0, len(word_items), batch_size):
+            batch       = word_items[batch_start:batch_start + batch_size]
+            batch_idx   = [it[0] for it in batch]
+            batch_polys = [it[1] for it in batch]
+            batch_crops = [it[2] for it in batch]
+
+            target_width = min(
+                max(c.shape[1] for c in batch_crops),
+                self.rec_max_width if self.variable_width else self.rec_input_width
             )
-            
-            # Batch tensor olustur
+
             batch_tensors = []
             for crop in batch_crops:
-                # Truncate veya pad
                 h, w = crop.shape[:2]
-                if w > max_width:
-                    crop = crop[:, :max_width]
-                elif w < max_width:
-                    padded = np.zeros((h, max_width), dtype=crop.dtype)
+                if w > target_width:
+                    crop = crop[:, :target_width]
+                elif w < target_width:
+                    padded = np.zeros((h, target_width), dtype=crop.dtype)
                     padded[:, :w] = crop
                     crop = padded
-                
-                # Normalize
-                normalized = crop.astype(np.float32) / 255.0
-                batch_tensors.append(normalized)
-            
-            # Stack: [B, H, W] -> [B, 1, H, W]
+                batch_tensors.append(crop.astype(np.float32) / 255.0)
+
             batch_tensor = np.stack(batch_tensors, axis=0)
-            batch_tensor = torch.from_numpy(batch_tensor).unsqueeze(1)
-            batch_tensor = batch_tensor.to(self.device)
-            
+            batch_tensor = torch.from_numpy(batch_tensor).unsqueeze(1).to(self.device)
+
             # --- Attention modu ---
             if self.recognition_mode == 'attention':
                 char_indices, _ = self.recognition_model.predict(
                     batch_tensor, max_len=self.rec_max_len
-                )  # [B, T]
-                texts = self._attn_decoder.batch_indices_to_texts(char_indices)
+                )
+                texts       = self._attn_decoder.batch_indices_to_texts(char_indices)
                 confidences = np.full(len(batch_crops), 0.9, dtype=np.float32)
 
             # --- CTC modu ---
             else:
-                log_probs = self.recognition_model(batch_tensor)  # [T, B, C]
+                log_probs = self.recognition_model(batch_tensor)
 
-                # Decode: CTCPrefixDecoder (beam) veya greedy
                 if self._prefix_decoder is not None:
                     prefix_results = self._prefix_decoder.decode_batch(log_probs)
-                    texts = [t for t, _ in prefix_results]
-                    # Prefix skoru log-uzay -> olasiliga cevir, [0,1] araligina sinirla
-                    confidences = np.array(
+                    texts          = [t for t, _ in prefix_results]
+                    confidences    = np.array(
                         [float(np.clip(np.exp(s), 0.0, 1.0)) for _, s in prefix_results],
                         dtype=np.float32
                     )
                 else:
                     texts = self.decoder.decode_greedy(log_probs)
-                    # Duzeltilmis guven: sadece non-blank, non-repeat pozisyonlar
                     with torch.no_grad():
-                        probs     = torch.exp(log_probs)           # [T, B, C]
-                        mp, mi    = probs.max(dim=2)               # [T, B]
-                        mp_b = mp.permute(1, 0).cpu().numpy()      # [B, T]
-                        mi_b = mi.permute(1, 0).cpu().numpy()      # [B, T]
+                        probs = torch.exp(log_probs)
+                        mp, mi   = probs.max(dim=2)
+                        mp_b = mp.permute(1, 0).cpu().numpy()
+                        mi_b = mi.permute(1, 0).cpu().numpy()
                     confidences = self._compute_confidence(mp_b, mi_b, self.vocab.blank_idx)
-            
-            # Sonuclari yerlestir
-            for j, (idx, text) in enumerate(zip(batch_indices, texts)):
-                text_boxes[idx] = TextBox(
-                    box=boxes[idx],
-                    text=text,
-                    confidence=float(confidences[j])
-                )
-        
-        return text_boxes
+
+            for j, (line_idx, poly) in enumerate(zip(batch_idx, batch_polys)):
+                line_word_texts[line_idx].append(texts[j])
+                line_word_confs[line_idx].append(float(confidences[j]))
+                line_word_polys[line_idx].append(poly)
+
+        # 3. Kelime duzeyinde TextBox'lar olustur
+        result: List[TextBox] = []
+        for i, box in enumerate(boxes):
+            words = line_word_texts[i]
+            confs = line_word_confs[i]
+            polys = line_word_polys[i]
+
+            if not words:
+                result.append(TextBox(box=box, text="", confidence=0.0))
+                continue
+
+            for word, conf, poly in zip(words, confs, polys):
+                result.append(TextBox(box=poly, text=word, confidence=conf))
+
+        return result
     
+    def _split_line_to_words(
+        self,
+        gray: np.ndarray,
+        box: np.ndarray,
+        min_gap_ratio: float = 0.015,
+        min_word_ratio: float = 0.025,
+    ) -> List[Tuple[np.ndarray, np.ndarray]]:
+        """
+        Tek satirlik grayscale crop'u dikey projeksiyon ile kelimelerine boler.
+
+        Args:
+            gray:           Orijinal cozunurlukta grayscale line crop
+            box:            [4, 2] polygon (gorsel koordinatlari)
+            min_gap_ratio:  Minimum bosluk genisligi (crop.width orani)
+            min_word_ratio: Minimum kelime genisligi (crop.width orani)
+
+        Returns:
+            [(word_gray, word_polygon), ...]  —  bolunemezse [(gray, box)]
+        """
+        h, w = gray.shape[:2]
+        if w == 0 or h == 0:
+            return [(gray, box)]
+
+        min_gap_px  = max(2, int(w * min_gap_ratio))
+        min_word_px = max(4, int(w * min_word_ratio))
+
+        # Otsu binarize: metin koyu (0), arka plan acik (255)
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # Dikey projeksiyon: kolon basina koyu piksel sayisi
+        ink_col = (255 - binary).sum(axis=0).astype(np.float32)
+
+        # Yumusat — gurultuyu azalt
+        k = max(3, min(w // 20, 11))
+        if k % 2 == 0:
+            k += 1
+        ink_smooth = cv2.GaussianBlur(
+            ink_col.reshape(1, -1).astype(np.float32), (k, 1), 0
+        ).flatten()
+
+        max_ink = ink_smooth.max()
+        if max_ink < 1.0:
+            return [(gray, box)]  # tamamen bos
+
+        # Bosluk: maksimumun %5'inin altindaki kolonlar
+        is_gap = ink_smooth <= max_ink * 0.05
+
+        # Kelime segmentlerini bul (art arda gelen non-gap kolonlar)
+        segments: List[Tuple[int, int]] = []
+        in_word, seg_start = False, 0
+        for x in range(w):
+            if not is_gap[x]:
+                if not in_word:
+                    seg_start = x
+                    in_word = True
+            else:
+                if in_word:
+                    in_word = False
+                    if x - seg_start >= min_word_px:
+                        segments.append((seg_start, x))
+        if in_word and w - seg_start >= min_word_px:
+            segments.append((seg_start, w))
+
+        if len(segments) < 2:
+            return [(gray, box)]
+
+        # Cok yakın segmentleri birlestir (minimum bosluk yorumu)
+        merged: List[Tuple[int, int]] = [segments[0]]
+        for s, e in segments[1:]:
+            gap = s - merged[-1][1]
+            if gap < min_gap_px:
+                merged[-1] = (merged[-1][0], e)  # birlestir
+            else:
+                merged.append((s, e))
+
+        if len(merged) < 2:
+            return [(gray, box)]
+
+        # Crop kolon koordinatlarini gorsel koordinatlara donustur
+        x_min   = int(np.min(box[:, 0]))
+        y_min   = int(np.min(box[:, 1]))
+        x_max   = int(np.max(box[:, 0]))
+        y_max   = int(np.max(box[:, 1]))
+        scale_x = max(x_max - x_min, 1) / w
+
+        result: List[Tuple[np.ndarray, np.ndarray]] = []
+        for seg_s, seg_e in merged:
+            word_gray = gray[:, seg_s:seg_e]
+            wx1 = x_min + int(seg_s * scale_x)
+            wx2 = x_min + int(seg_e * scale_x)
+            word_poly = np.array(
+                [[wx1, y_min], [wx2, y_min], [wx2, y_max], [wx1, y_max]],
+                dtype=np.float32
+            )
+            result.append((word_gray, word_poly))
+
+        return result
+
     @staticmethod
     def _compute_confidence(
         max_probs: np.ndarray,

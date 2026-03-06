@@ -4,11 +4,12 @@ API endpoint'leri
 
 import io
 import time
+import base64
 from typing import List
 from pathlib import Path
 
 from fastapi import APIRouter, File, UploadFile, HTTPException, Form, Query
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 import cv2
 import numpy as np
 
@@ -23,6 +24,40 @@ router = APIRouter()
 
 # OCR Pipeline (global, lazy init)
 _ocr_pipeline = None
+
+_VIS_PALETTE = [
+    (0, 200, 0),
+    (0, 120, 255),
+    (220, 0, 220),
+    (0, 200, 200),
+    (255, 60, 60),
+]
+
+
+def _draw_boxes_b64(image: np.ndarray, text_boxes, show_text=True, show_confidence=True) -> str:
+    """Bounding box'lari gorsel uzerine ciz, base64 PNG dondur."""
+    vis = image.copy()
+    for idx, tb in enumerate(text_boxes):
+        color = _VIS_PALETTE[idx % len(_VIS_PALETTE)]
+        box = tb.box.astype(np.int32)
+        cv2.polylines(vis, [box.reshape((-1, 1, 2))], isClosed=True, color=color, thickness=2)
+
+        if show_text or show_confidence:
+            parts = []
+            if show_text and tb.text:
+                parts.append(tb.text)
+            if show_confidence:
+                parts.append(f"{tb.confidence*100:.0f}%")
+            label = "  ".join(parts)
+            x, y = int(box[:, 0].min()), int(box[:, 1].min())
+            font, scale, thick = cv2.FONT_HERSHEY_SIMPLEX, 0.55, 1
+            (tw, th), baseline = cv2.getTextSize(label, font, scale, thick)
+            by = max(y - 4, th + 4)
+            cv2.rectangle(vis, (x, by - th - 4), (x + tw + 4, by + baseline), color, cv2.FILLED)
+            cv2.putText(vis, label, (x + 2, by - 2), font, scale, (255, 255, 255), thick, cv2.LINE_AA)
+
+    _, buf = cv2.imencode('.png', vis)
+    return "data:image/png;base64," + base64.b64encode(buf.tobytes()).decode('utf-8')
 
 
 def get_ocr_pipeline():
@@ -52,13 +87,14 @@ def image_to_numpy(file_content: bytes) -> np.ndarray:
     response_model=OCRResponse,
     responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
     summary="Tekil OCR",
-    description="Tek bir gorselden metin cikarir"
+    description="Tek bir gorselden metin cikarir. visualized_image alani base64 PNG icerir — bounding box'lari cizili gorsel."
 )
 async def ocr_single(
     file: UploadFile = File(..., description="Gorsel dosyasi"),
     output_format: OutputFormat = Form(default=OutputFormat.JSON),
     spell_check: bool = Form(default=True),
-    language: str = Form(default="tr")
+    language: str = Form(default="tr"),
+    visualize: bool = Form(default=True, description="Bounding box gorselini yanita ekle (base64 PNG)")
 ):
     """Tek gorsel icin OCR"""
     
@@ -97,13 +133,20 @@ async def ocr_single(
                     polygon=tb.box.tolist()
                 )
             ))
-        
+
+        # Bounding box gorsel — preprocessed goruntu uzerinde ciz (box koordinatlari ona ait)
+        visualized_b64 = None
+        if visualize and result.text_boxes:
+            vis_img = result.source_image if result.source_image is not None else image
+            visualized_b64 = _draw_boxes_b64(vis_img, result.text_boxes)
+
         return OCRResponse(
             success=True,
             text=result.text,
             blocks=blocks,
             processing_time=result.processing_time,
-            image_size={"width": w, "height": h}
+            image_size={"width": w, "height": h},
+            visualized_image=visualized_b64
         )
         
     except ValueError as e:
@@ -196,6 +239,50 @@ async def ocr_table(
         status_code=501,
         detail="Tablo OCR henuz desteklenmiyor. Yakin zamanda eklenecek."
     )
+
+
+@router.post(
+    "/ocr/visualize",
+    summary="OCR Gorsel Cikti",
+    description="Tespit edilen metin kutularini gorsel uzerine cizer ve PNG olarak dondurur"
+)
+async def ocr_visualize(
+    file: UploadFile = File(..., description="Gorsel dosyasi"),
+    spell_check: bool = Form(default=False),
+    language: str = Form(default="tr"),
+    show_text: bool = Form(default=True, description="Kutu uzerine okunan metni yaz"),
+    show_confidence: bool = Form(default=True, description="Guven skorunu goster"),
+):
+    """EasyOCR'in bounding box'ladigi + bizim okuduğumuz sonucu gorsel olarak dondurur"""
+
+    allowed_types = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}
+    file_ext = Path(file.filename).suffix.lower() if file.filename else ''
+    if file_ext not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"Desteklenmeyen dosya tipi: {file_ext}")
+
+    try:
+        content = await file.read()
+        image = image_to_numpy(content)
+
+        pipeline = get_ocr_pipeline()
+        result = pipeline.recognize(image, spell_check=spell_check, language=language)
+
+        b64 = _draw_boxes_b64(image, result.text_boxes,
+                              show_text=show_text, show_confidence=show_confidence)
+        # base64 prefix'i strip et, ham PNG bytes al
+        raw = base64.b64decode(b64.split(",", 1)[1])
+
+        return StreamingResponse(
+            io.BytesIO(raw),
+            media_type="image/png",
+            headers={"X-Box-Count": str(len(result.text_boxes)),
+                     "X-Processing-Time": f"{result.processing_time:.3f}"}
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Visualize hatasi: {str(e)}")
 
 
 @router.get(

@@ -49,6 +49,39 @@ class TextBox:
         }
 
 
+def _group_boxes_to_text(text_boxes) -> str:
+    """
+    TextBox listesini satirlara gore gruplar ve metni birlestirir.
+    Ayni satirda (y-merkezi yakin) olan kutular boslukla, farkli satirlar
+    yeni satir ile ayrilir. Kelime duzeyinde TextBox'larda dogru calisir.
+    """
+    if not text_boxes:
+        return ''
+
+    # y merkezine gore sirala
+    items = sorted(text_boxes, key=lambda tb: (tb.y1 + tb.y2) / 2)
+
+    lines = []
+    current_line = [items[0]]
+
+    for tb in items[1:]:
+        prev        = current_line[-1]
+        avg_h       = ((prev.y2 - prev.y1) + (tb.y2 - tb.y1)) / 2
+        y_diff      = abs((tb.y1 + tb.y2) / 2 - (prev.y1 + prev.y2) / 2)
+        if y_diff < avg_h * 0.6:          # ayni satirda
+            current_line.append(tb)
+        else:
+            lines.append(current_line)
+            current_line = [tb]
+    lines.append(current_line)
+
+    result = []
+    for line in lines:
+        line_sorted = sorted(line, key=lambda tb: tb.x1)
+        result.append(' '.join(tb.text for tb in line_sorted if tb.text))
+    return '\n'.join(r for r in result if r)
+
+
 @dataclass
 class OCRResult:
     """OCR sonucu"""
@@ -56,6 +89,7 @@ class OCRResult:
     full_text: str = ""
     processing_time: float = 0.0
     layout: Optional[Any] = None  # DocumentLayout (layout analizi yapildiysa)
+    source_image: Optional[Any] = None  # preprocessed goruntu (numpy array)
 
     @property
     def text(self) -> str:
@@ -66,7 +100,7 @@ class OCRResult:
             structured = self.layout.to_structured_text()
             if structured.strip():
                 return structured
-        return '\n'.join([tb.text for tb in self.text_boxes if tb.text])
+        return _group_boxes_to_text(self.text_boxes)
 
     def to_dict(self) -> dict:
         return {

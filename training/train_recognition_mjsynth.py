@@ -472,10 +472,13 @@ class AdvancedTrainer:
 
 def main():
     parser = argparse.ArgumentParser(description='Gelismis MJSynth Egitimi')
-    parser.add_argument('--data_root', type=str, required=True)
+    parser.add_argument('--data_root', type=str, default=None,
+                        help='Gorsel klasoru (JSON mutlak yol iceriyorsa gerekli degil)')
     parser.add_argument('--train_json', type=str, required=True)
+    parser.add_argument('--val_json', type=str, default=None,
+                        help='Ayri validation JSON dosyasi (verilirse val_split yok sayilir)')
     parser.add_argument('--val_split', type=float, default=0.05,
-                        help='Validation icin ayrilacak oran (0.05 = %%5)')
+                        help='Validation icin ayrilacak oran (0.05 = %%5, val_json yoksa kullanilir)')
     parser.add_argument('--config', type=str, default='config.yaml')
     parser.add_argument('--epochs', type=int, default=30)
     parser.add_argument('--batch_size', type=int, default=96,
@@ -484,6 +487,8 @@ def main():
                         help='Augmentation aktif et')
     parser.add_argument('--resume', type=str, default=None,
                         help='Checkpoint yolu (ornek: checkpoints/1M_augmented/checkpoint_epoch_3.pth)')
+    parser.add_argument('--reset-best-acc', action='store_true', default=False,
+                        help='Resume sonrasi best_val_acc sifirla (farkli veriyle finetune icin)')
     parser.add_argument('--save_dir', type=str, default='checkpoints/advanced')
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--seed', type=int, default=42)
@@ -548,7 +553,7 @@ def main():
     rec_cfg = config.get('recognition', {}).get('model', {})
     
     print(f"\n[DATASET] Yukleniyor: {args.train_json}")
-    full_dataset = RecognitionDataset(
+    train_dataset = RecognitionDataset(
         data_dir=args.data_root,
         annotation_file=args.train_json,
         vocab=vocab,
@@ -557,19 +562,31 @@ def main():
         augmentor=augmentor,
         synthetic_ratio=0.0
     )
-    
-    # Train/Val split
-    total_size = len(full_dataset)
-    val_size = int(total_size * args.val_split)
-    train_size = total_size - val_size
-    
-    train_dataset, val_dataset = random_split(
-        full_dataset, 
-        [train_size, val_size],
-        generator=torch.Generator().manual_seed(args.seed)
-    )
-    
-    print(f"[SPLIT] Train: {train_size:,} | Val: {val_size:,}")
+
+    if args.val_json:
+        # Ayri validation JSON kullan
+        val_dataset = RecognitionDataset(
+            data_dir=args.data_root,
+            annotation_file=args.val_json,
+            vocab=vocab,
+            image_height=rec_cfg.get('input_height', 32),
+            image_width=rec_cfg.get('input_width', 256),
+            augmentor=None,
+            synthetic_ratio=0.0
+        )
+        print(f"[DATASET] Val JSON: {args.val_json}")
+        print(f"[SPLIT] Train: {len(train_dataset):,} | Val: {len(val_dataset):,}")
+    else:
+        # Train icerisinden val_split orani ayir
+        total_size = len(train_dataset)
+        val_size = int(total_size * args.val_split)
+        train_size = total_size - val_size
+        train_dataset, val_dataset = random_split(
+            train_dataset,
+            [train_size, val_size],
+            generator=torch.Generator().manual_seed(args.seed)
+        )
+        print(f"[SPLIT] Train: {train_size:,} | Val: {val_size:,}")
     
     # DataLoaders - Optimize edilmis
     if args.num_workers is not None:
@@ -610,6 +627,12 @@ def main():
     # Resume
     if args.resume:
         trainer.load_checkpoint(args.resume)
+
+    # best_val_acc sifirla: farkli veriyle finetune yapilirken eski esigi devralma
+    if getattr(args, 'reset_best_acc', False):
+        old_acc = trainer.best_val_acc
+        trainer.best_val_acc = 0.0
+        print(f"[RESET] best_val_acc sifirlandi ({old_acc*100:.2f}% -> 0.00%)")
 
     # LR override: --lr ile checkpoint LR'si ezilir (ince ayar icin 1e-4 gibi)
     if args.lr is not None:

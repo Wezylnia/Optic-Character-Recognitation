@@ -7,7 +7,6 @@ const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const previewSection = document.getElementById('previewSection');
 const previewImage = document.getElementById('previewImage');
-const overlayCanvas = document.getElementById('overlayCanvas');
 const resultSection = document.getElementById('resultSection');
 const resultText = document.getElementById('resultText');
 const resultJson = document.getElementById('resultJson');
@@ -69,7 +68,6 @@ function handleFileSelect(e) {
 
 // File processing
 async function processFile(file) {
-    // Validate file type
     const validTypes = ['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/webp'];
     if (!validTypes.includes(file.type)) {
         showError('Desteklenmeyen dosya tipi. Lutfen PNG, JPG, BMP, TIFF veya WEBP yukleyin.');
@@ -77,28 +75,8 @@ async function processFile(file) {
     }
 
     currentFile = file;
-    
-    // Show preview
-    showPreview(file);
-    
-    // Perform OCR
+    previewSection.style.display = 'none'; // cevap gelene kadar gizle
     await performOCR(file);
-}
-
-function showPreview(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        previewImage.src = e.target.result;
-        previewSection.style.display = 'block';
-        
-        // Wait for image to load
-        previewImage.onload = () => {
-            // Resize canvas to match image
-            overlayCanvas.width = previewImage.width;
-            overlayCanvas.height = previewImage.height;
-        };
-    };
-    reader.readAsDataURL(file);
 }
 
 async function performOCR(file) {
@@ -125,7 +103,6 @@ async function performOCR(file) {
         currentResult = result;
         
         displayResult(result);
-        drawBoxes(result.blocks);
         
     } catch (err) {
         showError(err.message);
@@ -135,11 +112,18 @@ async function performOCR(file) {
 }
 
 function displayResult(result) {
+    // Sunucudan gelen bounding box'lı görseli direkt göster
+    if (result.visualized_image) {
+        previewImage.src = result.visualized_image;
+    }
+    previewSection.style.display = 'block';
+
     // Text tab
     resultText.value = result.text;
     
-    // JSON tab
-    resultJson.textContent = JSON.stringify(result, null, 2);
+    // JSON tab — visualized_image çok uzun, özetini göster
+    const summary = {...result, visualized_image: result.visualized_image ? '[base64 PNG]' : null};
+    resultJson.textContent = JSON.stringify(summary, null, 2);
     
     // Meta info
     resultMeta.innerHTML = `
@@ -150,42 +134,7 @@ function displayResult(result) {
     
     resultSection.style.display = 'block';
 }
-
-function drawBoxes(blocks) {
-    const ctx = overlayCanvas.getContext('2d');
-    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
     
-    // Scale factor
-    const scaleX = previewImage.width / currentResult.image_size.width;
-    const scaleY = previewImage.height / currentResult.image_size.height;
-    
-    blocks.forEach((block, index) => {
-        const box = block.bounding_box;
-        
-        // Draw rectangle
-        ctx.strokeStyle = '#22c55e';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(
-            box.x1 * scaleX,
-            box.y1 * scaleY,
-            (box.x2 - box.x1) * scaleX,
-            (box.y2 - box.y1) * scaleY
-        );
-        
-        // Draw polygon if available
-        if (box.polygon && box.polygon.length === 4) {
-            ctx.beginPath();
-            ctx.moveTo(box.polygon[0][0] * scaleX, box.polygon[0][1] * scaleY);
-            for (let i = 1; i < box.polygon.length; i++) {
-                ctx.lineTo(box.polygon[i][0] * scaleX, box.polygon[i][1] * scaleY);
-            }
-            ctx.closePath();
-            ctx.strokeStyle = 'rgba(37, 99, 235, 0.8)';
-            ctx.stroke();
-        }
-    });
-}
-
 function switchTab(tabId) {
     // Update buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -206,9 +155,6 @@ function clearAll() {
     previewSection.style.display = 'none';
     resultSection.style.display = 'none';
     hideError();
-    
-    const ctx = overlayCanvas.getContext('2d');
-    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 }
 
 function copyText() {
